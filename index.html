@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <!-- 카카오톡 SDK -->
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
+    <!-- JSZip for creating ZIP files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <style>
         /* 커스텀 CSS */
@@ -434,16 +436,8 @@
                             id="submitButton"
                             onclick="console.log('버튼 클릭 - onclick 이벤트'); handleFormSubmitDirect(event);"
                             class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-indigo-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
-                        <i class="fas fa-copy mr-2"></i>
-                        작업지시서 완료 후 링크 복사하기
-                    </button>
-                    
-                    <!-- 디버깅용 테스트 버튼 -->
-                    <button type="button" 
-                            onclick="testSubmission()"
-                            class="w-full bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors text-sm">
-                        <i class="fas fa-bug mr-2"></i>
-                        디버그 테스트 (유효성 검사 건너뛰기)
+                        <i class="fas fa-download mr-2"></i>
+                        작업지시서 완료 후 다운로드 링크 생성
                     </button>
                 </div>
             </form>
@@ -457,10 +451,15 @@
                 <p class="text-gray-600 mb-4">작업지시서가 성공적으로 저장되었습니다.<br>카카오톡으로 전송해 주세요!</p>
                 
                 <div class="space-y-3">
+                    <button id="downloadAll" 
+                            class="w-full bg-green-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-600 transition-colors">
+                        <i class="fas fa-download mr-2"></i>
+                        모든 정보 다운로드 (ZIP)
+                    </button>
                     <button id="sendKakao" 
                             class="w-full bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors">
-                        <i class="fas fa-copy mr-2"></i>
-                        링크 복사하기
+                        <i class="fas fa-share mr-2"></i>
+                        카카오톡으로 링크 공유
                     </button>
                     <button id="closeModal" 
                             class="w-full bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
@@ -557,6 +556,7 @@
             // 모달 관련
             const closeModalBtn = document.getElementById('closeModal');
             const sendKakaoBtn = document.getElementById('sendKakao');
+            const downloadAllBtn = document.getElementById('downloadAll');
             
             if (closeModalBtn) {
                 closeModalBtn.addEventListener('click', closeModal);
@@ -566,6 +566,11 @@
             if (sendKakaoBtn) {
                 sendKakaoBtn.addEventListener('click', sendToKakao);
                 console.log('카카오 전송 이벤트 리스너 추가 완료');
+            }
+            
+            if (downloadAllBtn) {
+                downloadAllBtn.addEventListener('click', downloadAllAsZip);
+                console.log('전체 다운로드 이벤트 리스너 추가 완료');
             }
             
             // 라디오 버튼 및 체크박스 스타일링
@@ -964,41 +969,54 @@
             }, 100);
         }
 
-        // 모달에 이미지 미리보기 표시
+        // 모달에 이미지 미리보기 표시 (기존 모달에 추가될 내용)
         function displayModalImagePreview() {
-            const previewContainer = document.getElementById('modalImagePreview');
+            // 모달 내용에 이미지 미리보기 영역 추가
+            const modal = document.getElementById('resultModal');
+            const modalContent = modal.querySelector('div > div');
+            
+            let imagePreviewHtml = '';
             
             if (orderData.images && orderData.images.length > 0) {
-                previewContainer.innerHTML = `
-                    <div class="mb-4">
+                imagePreviewHtml = `
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg" id="modalImagePreview">
                         <div class="flex justify-between items-center mb-3">
                             <h4 class="text-lg font-semibold text-gray-700">📸 업로드된 상품사진 (${orderData.images.length}장)</h4>
-                            <button onclick="downloadAllImagesAsZip()" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors">
-                                <i class="fas fa-download mr-1"></i>ZIP 다운로드
+                            <button onclick="downloadImagesOnlyAsZip()" class="bg-purple-500 text-white px-3 py-1 rounded text-sm hover:bg-purple-600 transition-colors">
+                                <i class="fas fa-images mr-1"></i>이미지만 ZIP
                             </button>
                         </div>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                             ${orderData.images.map((imgData, index) => `
-                                <div class="text-center bg-gray-50 p-2 rounded-lg">
-                                    <img src="${imgData.url}" alt="${imgData.name}" class="w-full h-20 object-cover rounded border cursor-pointer" onclick="downloadSingleImage(${index})">
+                                <div class="text-center bg-white p-2 rounded border">
+                                    <img src="${imgData.url}" alt="${imgData.name}" class="w-full h-16 object-cover rounded cursor-pointer" onclick="downloadSingleImage(${index})">
                                     <p class="text-xs text-gray-500 mt-1 truncate">${imgData.name}</p>
-                                    <p class="text-xs text-gray-400">${formatFileSize(imgData.file.size)}</p>
                                     <button onclick="downloadSingleImage(${index})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs mt-1 hover:bg-blue-600 transition-colors">
-                                        <i class="fas fa-download mr-1"></i>다운로드
+                                        <i class="fas fa-download mr-1"></i>개별 다운로드
                                     </button>
                                 </div>
                             `).join('')}
                         </div>
-                        <p class="text-sm text-indigo-600 mt-3">💡 개별 이미지를 클릭하거나 다운로드 버튼을 눌러 저장하세요.</p>
+                        <p class="text-sm text-indigo-600 mt-3 text-center">💡 이미지를 클릭하거나 다운로드 버튼을 눌러 개별 저장 가능</p>
                     </div>
                 `;
             } else {
-                previewContainer.innerHTML = `
-                    <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-                        <p class="text-gray-500">업로드된 이미지가 없습니다.</p>
+                imagePreviewHtml = `
+                    <div class="mb-4 p-4 bg-gray-50 rounded-lg" id="modalImagePreview">
+                        <p class="text-gray-500 text-center">업로드된 이미지가 없습니다.</p>
                     </div>
                 `;
             }
+            
+            // 기존 내용에 이미지 미리보기 추가
+            const existingImagePreview = document.getElementById('modalImagePreview');
+            if (existingImagePreview) {
+                existingImagePreview.remove();
+            }
+            
+            // 버튼들 앞에 이미지 미리보기 삽입
+            const buttonContainer = modalContent.querySelector('.space-y-3');
+            buttonContainer.insertAdjacentHTML('beforebegin', imagePreviewHtml);
         }
 
         // 모달 닫기
@@ -1197,41 +1215,151 @@
             });
         }
 
-        // 디버깅용 테스트 함수
-        function testSubmission() {
-            console.log('디버그 테스트 시작 - 유효성 검사 건너뛰기');
-            
+        // 전체 정보를 ZIP으로 다운로드
+        async function downloadAllAsZip() {
             try {
-                // 로딩 표시
-                showLoading();
+                const zip = new JSZip();
                 
-                // 임시 데이터로 수집
-                orderData = {
-                    brandName: '테스트 브랜드',
-                    concept: '테스트 컨셉',
-                    gender: '무관',
-                    race: '무관',
-                    locations: ['스튜디오'],
-                    customLocation: '',
-                    contact: '010-1234-5678',
-                    additionalRequest: '테스트 요청사항',
-                    images: [],
-                    timestamp: new Date().toLocaleString('ko-KR')
-                };
+                // 작업지시서 텍스트 파일 생성
+                const orderText = createOrderSummaryText();
+                zip.file('작업지시서.txt', orderText);
                 
-                console.log('테스트 데이터 설정 완료:', orderData);
+                // 이미지 파일들 추가
+                if (orderData.images && orderData.images.length > 0) {
+                    const imageFolder = zip.folder('상품사진');
+                    
+                    for (let i = 0; i < orderData.images.length; i++) {
+                        const imageData = orderData.images[i];
+                        
+                        // Base64 이미지를 Blob으로 변환
+                        const response = await fetch(imageData.url);
+                        const blob = await response.blob();
+                        const arrayBuffer = await blob.arrayBuffer();
+                        
+                        // 파일 확장자 추출
+                        const extension = imageData.name.split('.').pop() || 'jpg';
+                        const fileName = `상품사진_${i + 1}.${extension}`;
+                        
+                        imageFolder.file(fileName, arrayBuffer);
+                    }
+                }
                 
-                // 1초 후 모달 표시
-                setTimeout(() => {
-                    hideLoading();
-                    showResultModal();
-                    console.log('테스트 모달 표시 완료');
-                }, 1000);
+                // ZIP 파일 생성 및 다운로드
+                const content = await zip.generateAsync({type: 'blob'});
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                const fileName = `끈스튜디오_작업지시서_${timestamp}.zip`;
+                
+                // 다운로드 실행
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert('📦 작업지시서와 상품사진이 ZIP 파일로 다운로드되었습니다!');
                 
             } catch (error) {
-                console.error('테스트 함수 오류:', error);
-                alert('테스트 중 오류가 발생했습니다: ' + error.message);
-                hideLoading();
+                console.error('ZIP 다운로드 오류:', error);
+                alert('다운로드 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        // 작업지시서 요약 텍스트 생성
+        function createOrderSummaryText() {
+            const locations = orderData.locations ? orderData.locations.join(', ') : '선택안함';
+            const customLocation = orderData.customLocation ? ` (기타: ${orderData.customLocation})` : '';
+            
+            return `
+===============================
+끈스튜디오 AI 피팅 촬영 작업지시서
+===============================
+
+📋 기본 정보
+- 브랜드명: ${orderData.brandName}
+- 제작 컨셉: ${orderData.concept}
+- 작성일시: ${orderData.timestamp}
+
+👥 모델 정보
+- 성별: ${orderData.gender}
+- 인종: ${orderData.race}
+
+📍 촬영 정보
+- 촬영 장소: ${locations}${customLocation}
+
+📞 연락처
+- 연락처: ${orderData.contact}
+
+💬 추가 요청사항
+${orderData.additionalRequest || '없음'}
+
+📸 첨부 이미지
+- 총 ${orderData.images ? orderData.images.length : 0}장의 상품사진이 포함되어 있습니다.
+
+===============================
+© 끈스튜디오 - AI 피팅 촬영 서비스
+카카오톡: @kkeunstudio
+===============================
+            `.trim();
+        }
+        
+        // 개별 이미지 다운로드
+        function downloadSingleImage(index) {
+            if (orderData.images && orderData.images[index]) {
+                const imageData = orderData.images[index];
+                const link = document.createElement('a');
+                link.href = imageData.url;
+                link.download = imageData.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+        // 이미지만 ZIP으로 다운로드
+        async function downloadImagesOnlyAsZip() {
+            if (!orderData.images || orderData.images.length === 0) {
+                alert('다운로드할 이미지가 없습니다.');
+                return;
+            }
+            
+            try {
+                const zip = new JSZip();
+                const imageFolder = zip.folder('상품사진');
+                
+                for (let i = 0; i < orderData.images.length; i++) {
+                    const imageData = orderData.images[i];
+                    
+                    // Base64 이미지를 Blob으로 변환
+                    const response = await fetch(imageData.url);
+                    const blob = await response.blob();
+                    const arrayBuffer = await blob.arrayBuffer();
+                    
+                    // 파일 확장자 추출
+                    const extension = imageData.name.split('.').pop() || 'jpg';
+                    const fileName = `상품사진_${i + 1}.${extension}`;
+                    
+                    imageFolder.file(fileName, arrayBuffer);
+                }
+                
+                // ZIP 파일 생성 및 다운로드
+                const content = await zip.generateAsync({type: 'blob'});
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                const fileName = `끈스튜디오_상품사진_${timestamp}.zip`;
+                
+                // 다운로드 실행
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert(`📸 ${orderData.images.length}장의 상품사진이 ZIP 파일로 다운로드되었습니다!`);
+                
+            } catch (error) {
+                console.error('이미지 ZIP 다운로드 오류:', error);
+                alert('다운로드 중 오류가 발생했습니다: ' + error.message);
             }
         }
         
