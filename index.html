@@ -727,10 +727,14 @@
         // 폼 제출 처리
         function handleFormSubmit(e) {
             e.preventDefault();
+            console.log('폼 제출 이벤트 발생');
             
             if (!validateForm()) {
+                console.log('폼 유효성 검사 실패');
                 return;
             }
+            
+            console.log('폼 유효성 검사 통과');
             
             // 로딩 표시
             showLoading();
@@ -742,6 +746,7 @@
             setTimeout(() => {
                 hideLoading();
                 showResultModal();
+                console.log('모달 표시 완료');
             }, 1000);
         }
 
@@ -750,13 +755,27 @@
             const form = document.getElementById('orderForm');
             let isValid = true;
             
-            // 필수 필드 검사
-            const requiredFields = form.querySelectorAll('input[required], textarea[required]');
-            requiredFields.forEach(field => {
-                if (!validateField({ target: field })) {
-                    isValid = false;
-                }
-            });
+            console.log('유효성 검사 시작');
+            
+            // 필수 필드 검사 - 브랜드명과 컨셉만 체크
+            const brandName = document.getElementById('brandName').value.trim();
+            const concept = document.getElementById('concept').value.trim();
+            const contact = document.getElementById('contact').value.trim();
+            
+            if (!brandName) {
+                alert('브랜드명을 입력해 주세요.');
+                isValid = false;
+            }
+            
+            if (!concept) {
+                alert('제작 컨셉을 입력해 주세요.');
+                isValid = false;
+            }
+            
+            if (!contact) {
+                alert('연락처를 입력해 주세요.');
+                isValid = false;
+            }
             
             // 성별 선택 검사
             const genderSelected = form.querySelector('input[name="gender"]:checked');
@@ -772,11 +791,8 @@
                 isValid = false;
             }
             
-            // 이미지 업로드 검사
-            if (uploadedImages.length === 0) {
-                alert('상품 사진을 최소 1장 업로드해 주세요.');
-                isValid = false;
-            }
+            // 이미지 업로드는 선택사항으로 변경
+            console.log('유효성 검사 결과:', isValid);
             
             return isValid;
         }
@@ -786,18 +802,22 @@
             const form = document.getElementById('orderForm');
             const formData = new FormData(form);
             
+            console.log('데이터 수집 시작');
+            
             orderData = {
-                brandName: formData.get('brandName'),
-                concept: formData.get('concept'),
-                gender: formData.get('gender'),
-                race: formData.get('race'),
+                brandName: formData.get('brandName') || '',
+                concept: formData.get('concept') || '',
+                gender: formData.get('gender') || '',
+                race: formData.get('race') || '',
                 locations: getSelectedLocations(),
-                customLocation: formData.get('customLocation'),
-                contact: formData.get('contact'),
-                additionalRequest: formData.get('additionalRequest'),
-                images: uploadedImages,
+                customLocation: formData.get('customLocation') || '',
+                contact: formData.get('contact') || '',
+                additionalRequest: formData.get('additionalRequest') || '',
+                images: uploadedImages || [],
                 timestamp: new Date().toLocaleString('ko-KR')
             };
+            
+            console.log('수집된 데이터:', orderData);
         }
 
         // 선택된 장소 가져오기
@@ -899,21 +919,24 @@
         // 주문 데이터를 URL에 인코딩
         function encodeOrderDataToURL() {
             const dataToEncode = {
-                brandName: orderData.brandName,
-                concept: orderData.concept,
-                gender: orderData.gender,
-                race: orderData.race,
-                locations: orderData.locations,
-                customLocation: orderData.customLocation,
-                contact: orderData.contact,
-                additionalRequest: orderData.additionalRequest,
-                images: orderData.images.map(img => ({
-                    name: img.name,
-                    url: img.url,
-                    size: img.file.size
-                })),
-                timestamp: orderData.timestamp
+                brandName: orderData.brandName || '',
+                concept: orderData.concept || '',
+                gender: orderData.gender || '',
+                race: orderData.race || '',
+                locations: orderData.locations || [],
+                customLocation: orderData.customLocation || '',
+                contact: orderData.contact || '',
+                additionalRequest: orderData.additionalRequest || '',
+                images: (orderData.images && orderData.images.length > 0) ? 
+                    orderData.images.map(img => ({
+                        name: img.name,
+                        url: img.url,
+                        size: img.file.size
+                    })) : [],
+                timestamp: orderData.timestamp || new Date().toLocaleString('ko-KR')
             };
+            
+            console.log('인코딩할 데이터:', dataToEncode);
             
             // JSON을 문자열로 변환 후 Base64로 인코딩
             const jsonString = JSON.stringify(dataToEncode);
