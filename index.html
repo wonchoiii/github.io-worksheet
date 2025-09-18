@@ -432,7 +432,7 @@
                     <button type="submit" 
                             class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-indigo-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
                         <i class="fas fa-paper-plane mr-2"></i>
-                        작업지시서 완료하고 카카오톡으로 전송
+                        작업지시서 완료하고 카카오톡으로 링크 보내기
                     </button>
                 </div>
             </form>
@@ -479,6 +479,7 @@
         // DOM 로드 완료 시 실행
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
+            checkForSharedData();
         });
 
         // 앱 초기화
@@ -885,11 +886,13 @@
             modal.classList.remove('flex', 'modal-enter');
         }
 
-        // 카카오톡으로 전송 (링크 복사)
+        // 카카오톡으로 전송 (데이터 링크 생성 및 공유)
         function sendToKakao() {
-            // 현재 페이지 URL을 카카오톡으로 공유
-            const shareUrl = window.location.href;
-            const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n아래 링크에서 작업지시서를 확인해주세요:\n${shareUrl}\n\n작업 문의: @kkeunstudio`;
+            // 주문 데이터를 Base64로 인코딩하여 URL에 포함
+            const encodedData = encodeOrderDataToURL();
+            const shareUrl = `${window.location.origin}${window.location.pathname}#data=${encodedData}`;
+            
+            const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n📋 작업지시서 확인 및 이미지 다운로드:\n${shareUrl}\n\n💡 위 링크에서 모든 정보와 첨부된 상품사진을 확인하고 다운로드할 수 있습니다.\n\n작업 문의: @kkeunstudio`;
             
             // 모바일에서 카카오톡 친구찾기 URL 스킴 사용
             if (isMobile()) {
@@ -928,6 +931,30 @@
             }
         }
         
+        // 주문 데이터를 URL에 인코딩
+        function encodeOrderDataToURL() {
+            const dataToEncode = {
+                brandName: orderData.brandName,
+                concept: orderData.concept,
+                gender: orderData.gender,
+                race: orderData.race,
+                locations: orderData.locations,
+                customLocation: orderData.customLocation,
+                contact: orderData.contact,
+                additionalRequest: orderData.additionalRequest,
+                images: orderData.images.map(img => ({
+                    name: img.name,
+                    url: img.url,
+                    size: img.file.size
+                })),
+                timestamp: orderData.timestamp
+            };
+            
+            // JSON을 문자열로 변환 후 Base64로 인코딩
+            const jsonString = JSON.stringify(dataToEncode);
+            return btoa(encodeURIComponent(jsonString));
+        }
+        
 
         
 
@@ -939,6 +966,131 @@
 
 
 
+        // 공유된 데이터 확인 및 표시
+        function checkForSharedData() {
+            const hash = window.location.hash;
+            if (hash.startsWith('#data=')) {
+                const encodedData = hash.substring(6);
+                try {
+                    const jsonString = decodeURIComponent(atob(encodedData));
+                    const sharedData = JSON.parse(jsonString);
+                    displaySharedOrderData(sharedData);
+                } catch (error) {
+                    console.error('공유 데이터 디코딩 오류:', error);
+                }
+            }
+        }
+        
+        // 공유된 주문 데이터 표시
+        function displaySharedOrderData(data) {
+            // 폼을 숨기고 공유 데이터 표시 영역 생성
+            document.querySelector('.bg-white.rounded-2xl').style.display = 'none';
+            
+            const sharedContainer = document.createElement('div');
+            sharedContainer.className = 'bg-white rounded-2xl shadow-xl overflow-hidden';
+            sharedContainer.innerHTML = `
+                <div class="bg-gradient-to-r from-green-500 to-teal-600 px-8 py-6">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fas fa-file-alt mr-3"></i>
+                        공유된 작업지시서
+                    </h2>
+                    <p class="text-green-100 mt-2">작업지시서 정보와 첨부된 이미지를 확인하고 다운로드하세요</p>
+                </div>
+                
+                <div class="p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4">📋 기본 정보</h3>
+                            <div class="space-y-2">
+                                <p><strong>브랜드명:</strong> ${data.brandName}</p>
+                                <p><strong>모델:</strong> ${data.gender} / ${data.race}</p>
+                                <p><strong>연락처:</strong> ${data.contact}</p>
+                                <p><strong>작성일시:</strong> ${data.timestamp}</p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4">📍 촬영 정보</h3>
+                            <div class="space-y-2">
+                                <p><strong>촬영 장소:</strong> ${data.locations ? data.locations.join(', ') : '-'}${data.customLocation ? ` (${data.customLocation})` : ''}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">💡 제작 컨셉</h3>
+                        <p class="bg-gray-50 p-4 rounded-lg">${data.concept}</p>
+                    </div>
+                    
+                    ${data.additionalRequest ? `
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">💬 추가 요청사항</h3>
+                            <p class="bg-gray-50 p-4 rounded-lg">${data.additionalRequest}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.images && data.images.length > 0 ? `
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold text-gray-700">📸 첨부된 상품사진 (${data.images.length}장)</h3>
+                                <button onclick="downloadAllSharedImages()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-download mr-2"></i>전체 다운로드
+                                </button>
+                            </div>
+                            <div id="sharedImageGrid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                ${data.images.map((img, index) => `
+                                    <div class="bg-gray-50 p-3 rounded-lg text-center">
+                                        <img src="${img.url}" alt="${img.name}" class="w-full h-24 object-cover rounded mb-2">
+                                        <p class="text-xs text-gray-600 mb-2">${img.name}</p>
+                                        <button onclick="downloadSharedImage(${index})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors">
+                                            <i class="fas fa-download mr-1"></i>다운로드
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="text-center pt-6 border-t">
+                        <button onclick="location.reload()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>새 작업지시서 작성하기
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 기존 폼 컨테이너 뒤에 추가
+            document.querySelector('.container > .bg-white').parentNode.appendChild(sharedContainer);
+            
+            // 전역 변수에 공유 데이터 저장
+            window.sharedOrderData = data;
+        }
+        
+        // 개별 이미지 다운로드
+        function downloadSharedImage(index) {
+            const imageData = window.sharedOrderData.images[index];
+            if (imageData) {
+                const link = document.createElement('a');
+                link.href = imageData.url;
+                link.download = imageData.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+        // 모든 이미지 다운로드 (ZIP 없이 개별 다운로드)
+        function downloadAllSharedImages() {
+            if (window.sharedOrderData && window.sharedOrderData.images) {
+                window.sharedOrderData.images.forEach((imageData, index) => {
+                    setTimeout(() => {
+                        downloadSharedImage(index);
+                    }, index * 300); // 300ms 간격으로 다운로드
+                });
+                alert(`${window.sharedOrderData.images.length}장의 이미지 다운로드가 시작되었습니다!`);
+            }
+        }
+        
         // 클립보드에 복사
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
