@@ -996,79 +996,91 @@
             buttonContainer.insertAdjacentHTML('beforebegin', imagePreviewHtml);
         }
 
-        // 작업지시서와 이미지를 ZIP으로 직접 다운로드
+        // 작업지시서 HTML과 이미지를 별도 다운로드
         async function downloadAllAsZipDirect() {
             try {
-                console.log('ZIP 다운로드 함수 시작');
+                console.log('다운로드 함수 시작');
                 
                 if (!orderData) {
                     alert('❌ 작업지시서 데이터가 없습니다. 다시 시도해 주세요.');
                     return;
                 }
                 
-                const zip = new JSZip();
+                const timestamp = new Date().toISOString().slice(0, 10);
+                const brandName = orderData.brandName || 'unnamed';
                 
-                // 작업지시서 텍스트 파일 생성
-                console.log('작업지시서 텍스트 파일 생성');
-                const orderText = createOrderSummaryText();
-                zip.file('작업지시서.txt', orderText);
+                // 1. 작업지시서 HTML 파일 다운로드
+                console.log('작업지시서 HTML 파일 생성');
+                const htmlContent = createOrderSummaryHTML();
+                const htmlBlob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+                const htmlFileName = `끈스튜디오_작업지시서_${brandName}_${timestamp}.html`;
                 
-                // 이미지 파일들 추가
+                // HTML 파일 다운로드
+                const htmlLink = document.createElement('a');
+                htmlLink.href = URL.createObjectURL(htmlBlob);
+                htmlLink.download = htmlFileName;
+                document.body.appendChild(htmlLink);
+                htmlLink.click();
+                document.body.removeChild(htmlLink);
+                
+                console.log('HTML 파일 다운로드 완료:', htmlFileName);
+                
+                // 2. 이미지 파일들 다운로드 (있는 경우)
                 if (orderData.images && orderData.images.length > 0) {
-                    console.log('이미지 파일 추가 시작:', orderData.images.length, '장');
-                    const imageFolder = zip.folder('상품사진');
+                    console.log('이미지 파일 다운로드 시작:', orderData.images.length, '장');
                     
+                    // 약간의 지연을 두고 이미지들을 순차적으로 다운로드
                     for (let i = 0; i < orderData.images.length; i++) {
                         const imageData = orderData.images[i];
-                        console.log(`이미지 ${i + 1} 처리 중:`, imageData.name);
+                        console.log(`이미지 ${i + 1} 다운로드 중:`, imageData.name);
                         
                         try {
+                            // 약간의 지연 (브라우저가 다운로드를 처리할 시간 제공)
+                            await new Promise(resolve => setTimeout(resolve, 300));
+                            
                             // Base64 이미지를 Blob으로 변환
                             const response = await fetch(imageData.url);
                             const blob = await response.blob();
-                            const arrayBuffer = await blob.arrayBuffer();
                             
                             // 파일 확장자 추출
                             const extension = imageData.name.split('.').pop() || 'jpg';
-                            const fileName = `상품사진_${i + 1}.${extension}`;
+                            const imageFileName = `${brandName}_상품사진_${i + 1}.${extension}`;
                             
-                            imageFolder.file(fileName, arrayBuffer);
-                            console.log(`이미지 ${i + 1} 추가 완료:`, fileName);
+                            // 이미지 파일 다운로드
+                            const imageLink = document.createElement('a');
+                            imageLink.href = URL.createObjectURL(blob);
+                            imageLink.download = imageFileName;
+                            document.body.appendChild(imageLink);
+                            imageLink.click();
+                            document.body.removeChild(imageLink);
+                            
+                            console.log(`이미지 ${i + 1} 다운로드 완료:`, imageFileName);
                         } catch (imageError) {
-                            console.error(`이미지 ${i + 1} 처리 오류:`, imageError);
+                            console.error(`이미지 ${i + 1} 다운로드 오류:`, imageError);
                             // 개별 이미지 오류는 건너뛰고 계속 진행
                         }
                     }
                 }
                 
-                // ZIP 파일 생성 및 다운로드
-                console.log('ZIP 파일 생성 시작');
-                const content = await zip.generateAsync({type: 'blob'});
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                const fileName = `끈스튜디오_작업지시서_${orderData.brandName || 'unnamed'}_${timestamp.slice(0, 10)}.zip`;
-                
-                // 다운로드 실행
-                console.log('다운로드 실행:', fileName);
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(content);
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
                 // 성공 메시지 표시
                 const imageCount = orderData.images ? orderData.images.length : 0;
+                const downloadedFiles = [];
+                downloadedFiles.push(`📄 ${htmlFileName}`);
+                if (imageCount > 0) {
+                    downloadedFiles.push(`🖼️ 상품사진 ${imageCount}장`);
+                }
+                
                 alert(`✅ 다운로드 완료!
 
-📦 파일명: ${fileName}
-📋 포함 내용: 
-• 작업지시서.txt
-• 상품사진 ${imageCount}장
+📦 다운로드된 파일들:
+${downloadedFiles.map(file => `• ${file}`).join('\n')}
 
-💡 ZIP 파일을 열어서 내용을 확인하세요!`);
+💡 브라우저 다운로드 폴더를 확인하세요!
+• HTML 파일을 더블클릭하면 작업지시서를 볼 수 있습니다
+• 상품사진들은 개별 파일로 저장되었습니다`);
                 
             } catch (error) {
-                console.error('ZIP 다운로드 오류:', error);
+                console.error('다운로드 오류:', error);
                 alert('다운로드 중 오류가 발생했습니다: ' + error.message);
             }
         }
@@ -1368,6 +1380,251 @@ ${url}
         
 
         
+        // 작업지시서를 HTML 형태로 생성
+        function createOrderSummaryHTML() {
+            const locations = orderData.locations ? orderData.locations.join(', ') : '선택안함';
+            const customLocation = orderData.customLocation ? ` (기타: ${orderData.customLocation})` : '';
+            
+            // 이미지 섹션 HTML 생성
+            let imagesHTML = '';
+            if (orderData.images && orderData.images.length > 0) {
+                imagesHTML = `
+                <div class="section-card">
+                    <h2>📸 첨부된 상품사진 (${orderData.images.length}장)</h2>
+                    <div class="image-grid">
+                        ${orderData.images.map((img, index) => `
+                            <div class="image-item">
+                                <img src="${img.url}" alt="${img.name}" class="product-image">
+                                <p class="image-name">${img.name}</p>
+                                <p class="image-size">${formatFileSize(img.file.size)}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p class="note">💡 실제 이미지 파일은 별도로 다운로드하시기 바랍니다.</p>
+                </div>`;
+            }
+            
+            return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>끈스튜디오 - AI 피팅 촬영 작업지시서</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            color: #334155;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 0.5rem 0 0;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .section-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-card h2 {
+            margin: 0 0 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            border-bottom: 2px solid #6366f1;
+            padding-bottom: 0.5rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+        }
+        .info-label {
+            font-weight: 500;
+            margin-right: 0.5rem;
+            color: #475569;
+        }
+        .info-value {
+            color: #1e293b;
+        }
+        .concept-box {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .image-item {
+            text-align: center;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .product-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+        .image-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 0.5rem 0 0.25rem;
+            color: #374151;
+        }
+        .image-size {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin: 0;
+        }
+        .note {
+            font-size: 0.875rem;
+            color: #6366f1;
+            background: #eef2ff;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        .footer {
+            background: #1e293b;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .footer p {
+            margin: 0.25rem 0;
+        }
+        @media (max-width: 640px) {
+            .container { margin: 10px; }
+            .header { padding: 1.5rem; }
+            .content { padding: 1rem; }
+            .info-grid { grid-template-columns: 1fr; }
+            .image-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 끈스튜디오</h1>
+            <p>AI 피팅 촬영 작업지시서</p>
+            <p style="font-size: 0.875rem;">작성일시: ${orderData.timestamp}</p>
+        </div>
+        
+        <div class="content">
+            <div class="section-card">
+                <h2>📋 기본 정보</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">브랜드명:</span>
+                        <span class="info-value">${orderData.brandName || '-'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">연락처:</span>
+                        <span class="info-value">${orderData.contact || '-'}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section-card">
+                <h2>💡 제작 컨셉</h2>
+                <div class="concept-box">
+                    ${(orderData.concept || '내용 없음').replace(/\n/g, '<br>')}
+                </div>
+            </div>
+            
+            <div class="section-card">
+                <h2>👥 모델 정보</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">성별:</span>
+                        <span class="info-value">${orderData.gender || '-'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">인종:</span>
+                        <span class="info-value">${orderData.race || '-'}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section-card">
+                <h2>📍 촬영 정보</h2>
+                <div class="info-item">
+                    <span class="info-label">촬영 장소:</span>
+                    <span class="info-value">${locations}${customLocation}</span>
+                </div>
+            </div>
+            
+            ${orderData.additionalRequest ? `
+            <div class="section-card">
+                <h2>💬 추가 요청사항</h2>
+                <div class="concept-box">
+                    ${orderData.additionalRequest.replace(/\n/g, '<br>')}
+                </div>
+            </div>
+            ` : ''}
+            
+            ${imagesHTML}
+        </div>
+        
+        <div class="footer">
+            <p><strong>© 2024 끈스튜디오 - AI 피팅 촬영 서비스</strong></p>
+            <p>카카오톡 채널: @kkeunstudio</p>
+        </div>
+    </div>
+</body>
+</html>`;
+        }
+        
+        // 파일 크기 포맷팅 함수
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
         // 클립보드에 복사 (기존 함수 유지)
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
