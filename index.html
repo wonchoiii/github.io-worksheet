@@ -724,7 +724,7 @@
         }
 
         // 폼 제출 처리
-        async function handleFormSubmit(e) {
+        function handleFormSubmit(e) {
             e.preventDefault();
             
             if (!validateForm()) {
@@ -737,16 +737,11 @@
             // 폼 데이터 수집
             collectFormData();
             
-            try {
-                // 시뮬레이션된 저장 처리
-                await new Promise(resolve => setTimeout(resolve, 1000));
+            // 간단한 지연 후 모달 표시
+            setTimeout(() => {
                 hideLoading();
                 showResultModal();
-            } catch (error) {
-                console.error('데이터 저장 오류:', error);
-                hideLoading();
-                alert('데이터 저장 중 오류가 발생했습니다. 다시 시도해 주세요.');
-            }
+            }, 1000);
         }
 
         // 전체 폼 유효성 검사
@@ -935,10 +930,7 @@
         
 
         
-        // 공유 ID 생성
-        function generateShareId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2);
-        }
+
 
         // 모바일 기기 감지
         function isMobile() {
@@ -963,31 +955,9 @@
             });
         }
 
-        // 작업지시서 요약 생성
-        function generateOrderSummary() {
-            const locations = orderData.locations.join(', ');
-            const customLoc = orderData.customLocation ? ` (${orderData.customLocation})` : '';
-            
-            // 이미지 파일명 목록 생성
-            const imageList = orderData.images.map((img, index) => {
-                return `   ${index + 1}. ${img.name} (${formatFileSize(img.file.size)})`;
-            }).join('\n');
-            
-            const imageSection = orderData.images.length > 0 
-                ? `\n\n📸 업로드된 상품사진 (${orderData.images.length}장):\n${imageList}`
-                : '\n📸 상품사진: 없음';
-            
-            return `📋 브랜드명: ${orderData.brandName}\n🎨 컨셉: ${orderData.concept}\n👤 모델: ${orderData.gender} / ${orderData.race}\n📍 장소: ${locations}${customLoc}\n📱 연락처: ${orderData.contact}${imageSection}\n💬 추가요청: ${orderData.additionalRequest || '없음'}\n⏰ 작성시간: ${orderData.timestamp}`;
-        }
 
-        // 파일 크기 포맷팅 함수
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
+
+
 
 
     </script>
