@@ -1030,10 +1030,34 @@
         function sendToKakao() {
             // 주문 데이터를 Base64로 인코딩하여 URL에 포함
             const encodedData = encodeOrderDataToURL();
-            const shareUrl = `${window.location.origin}${window.location.pathname}#data=${encodedData}`;
+            
+            // GitHub Pages URL을 사용 (환경에 따라 자동 감지)
+            const baseUrl = getBaseUrl();
+            const shareUrl = `${baseUrl}#data=${encodedData}`;
+            
+            console.log('생성된 공유 링크:', shareUrl);
             
             // 링크를 클립보드에 복사
             copyLinkToClipboard(shareUrl);
+        }
+        
+        // 기본 URL 가져오기 (GitHub Pages 우선)
+        function getBaseUrl() {
+            console.log('현재 호스트명:', window.location.hostname);
+            console.log('현재 전체 URL:', window.location.href);
+            
+            // GitHub Pages URL이 있는 경우 우선 사용
+            if (window.location.hostname.includes('github.io')) {
+                const fullUrl = `https://${window.location.hostname}${window.location.pathname}`;
+                console.log('GitHub Pages URL 사용:', fullUrl);
+                return fullUrl;
+            }
+            
+            // 로컬 개발 환경이나 다른 호스팅에서 GitHub Pages URL 사용
+            const githubPagesUrl = 'https://wonchoiii.github.io/github.io-worksheet/';
+            console.log('기본 GitHub Pages URL 사용:', githubPagesUrl);
+            
+            return githubPagesUrl;
         }
         
         // 주문 데이터를 URL에 인코딩
@@ -1058,9 +1082,35 @@
             
             console.log('인코딩할 데이터:', dataToEncode);
             
-            // JSON을 문자열로 변환 후 Base64로 인코딩
-            const jsonString = JSON.stringify(dataToEncode);
-            return btoa(encodeURIComponent(jsonString));
+            try {
+                // JSON을 문자열로 변환 후 Base64로 인코딩
+                const jsonString = JSON.stringify(dataToEncode);
+                const encoded = btoa(encodeURIComponent(jsonString));
+                
+                console.log('JSON 길이:', jsonString.length);
+                console.log('인코딩된 데이터 길이:', encoded.length);
+                
+                // URL 길이 검증 (일반적으로 2000자 미만 권장)
+                if (encoded.length > 8000) {
+                    console.warn('인코딩된 데이터가 너무 큽니다:', encoded.length, '문자');
+                    // 이미지 데이터 제외하고 다시 시도
+                    const dataWithoutImages = { ...dataToEncode, images: [] };
+                    const reducedJsonString = JSON.stringify(dataWithoutImages);
+                    const reducedEncoded = btoa(encodeURIComponent(reducedJsonString));
+                    console.log('이미지 제외 후 길이:', reducedEncoded.length);
+                    
+                    if (reducedEncoded.length < 2000) {
+                        alert('⚠️ 이미지 파일이 너무 커서 링크에 포함할 수 없습니다.\n작업지시서 정보만 포함하여 링크를 생성합니다.');
+                        return reducedEncoded;
+                    }
+                }
+                
+                return encoded;
+            } catch (error) {
+                console.error('데이터 인코딩 오류:', error);
+                alert('데이터 인코딩 중 오류가 발생했습니다. 다시 시도해 주세요.');
+                return '';
+            }
         }
         
 
@@ -1201,18 +1251,62 @@
         
         // 링크 복사 전용 함수
         function copyLinkToClipboard(url) {
+            // URL 길이 확인 및 표시
+            console.log('복사할 링크 길이:', url.length);
+            console.log('복사할 링크:', url);
+            
             navigator.clipboard.writeText(url).then(() => {
-                alert('링크가 복사되었습니다. 카카오톡으로 링크를 보내주세요.');
-            }).catch(() => {
-                // 폴백: 텍스트 선택
-                const textArea = document.createElement('textarea');
-                textArea.value = url;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                alert('링크가 복사되었습니다. 카카오톡으로 링크를 보내주세요.');
+                // 성공적으로 복사된 경우
+                showCopySuccessMessage(url);
+            }).catch((error) => {
+                console.error('클립보드 복사 실패:', error);
+                // 폴백: 텍스트 선택 방식
+                try {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = url;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    if (successful) {
+                        showCopySuccessMessage(url);
+                    } else {
+                        showCopyFailureMessage(url);
+                    }
+                } catch (err) {
+                    console.error('폴백 복사도 실패:', err);
+                    showCopyFailureMessage(url);
+                }
             });
+        }
+        
+        // 복사 성공 메시지 표시
+        function showCopySuccessMessage(url) {
+            const shortUrl = url.length > 80 ? url.substring(0, 80) + '...' : url;
+            alert(`✅ 작업지시서 링크가 복사되었습니다!
+
+📋 복사된 링크: ${shortUrl}
+
+💡 이제 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.
+받는 분이 링크를 클릭하면 작업지시서 정보와 상품사진을 확인하고 다운로드할 수 있습니다.`);
+        }
+        
+        // 복사 실패 메시지 표시
+        function showCopyFailureMessage(url) {
+            const shortUrl = url.length > 60 ? url.substring(0, 60) + '...' : url;
+            alert(`❌ 자동 복사에 실패했습니다.
+
+📋 아래 링크를 수동으로 복사해서 카카오톡으로 보내주세요:
+
+${url}
+
+💡 링크를 길게 눌러서 전체 선택 후 복사하세요.`);
         }
 
         // 전체 정보를 ZIP으로 다운로드
