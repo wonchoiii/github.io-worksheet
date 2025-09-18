@@ -510,6 +510,7 @@
             setupFormValidation();
             setupImageUpload();
             setupCustomOptions();
+            setupPhoneNumberFormatting();
             
             console.log('앱 초기화 완료');
         }
@@ -604,6 +605,66 @@
         // 커스텀 옵션 설정
         function setupCustomOptions() {
             // 기타 장소 입력 필드 처리는 위에서 이미 구현됨
+        }
+
+        // 전화번호 자동 포매팅 설정
+        function setupPhoneNumberFormatting() {
+            const contactInput = document.getElementById('contact');
+            
+            if (contactInput) {
+                contactInput.addEventListener('input', function(e) {
+                    formatPhoneNumber(e.target);
+                });
+                
+                contactInput.addEventListener('keydown', function(e) {
+                    // 백스페이스, 삭제, 탭, 이스케이프, 엔터, 화살표 키는 허용
+                    if ([8, 9, 27, 13, 46, 37, 38, 39, 40].indexOf(e.keyCode) !== -1 ||
+                        // Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X 허용
+                        (e.keyCode === 65 && (e.ctrlKey || e.metaKey)) ||
+                        (e.keyCode === 67 && (e.ctrlKey || e.metaKey)) ||
+                        (e.keyCode === 86 && (e.ctrlKey || e.metaKey)) ||
+                        (e.keyCode === 88 && (e.ctrlKey || e.metaKey))) {
+                        return;
+                    }
+                    
+                    // 숫자가 아닌 키는 차단
+                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                        e.preventDefault();
+                    }
+                });
+                
+                console.log('전화번호 자동 포매팅 설정 완료');
+            }
+        }
+
+        // 전화번호 포매팅 함수
+        function formatPhoneNumber(input) {
+            // 숫자만 추출
+            let value = input.value.replace(/\D/g, '');
+            
+            // 11자리를 초과하지 않도록 제한
+            if (value.length > 11) {
+                value = value.slice(0, 11);
+            }
+            
+            // 포매팅 적용
+            let formattedValue = '';
+            
+            if (value.length > 0) {
+                if (value.length <= 3) {
+                    // 010
+                    formattedValue = value;
+                } else if (value.length <= 7) {
+                    // 010-1234
+                    formattedValue = value.slice(0, 3) + '-' + value.slice(3);
+                } else {
+                    // 010-1234-5678
+                    formattedValue = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7);
+                }
+            }
+            
+            // 입력 필드에 포매팅된 값 설정
+            input.value = formattedValue;
         }
 
         // 이미지 업로드 설정
@@ -738,7 +799,7 @@
             if (field.name === 'contact') {
                 const phoneRegex = /^010-\d{4}-\d{4}$/;
                 if (!phoneRegex.test(value)) {
-                    showFieldError(field, '010-0000-0000 형식으로 입력해 주세요.');
+                    showFieldError(field, '올바른 휴대폰 번호를 입력해 주세요. (예: 010-1234-5678)');
                     return false;
                 }
             }
