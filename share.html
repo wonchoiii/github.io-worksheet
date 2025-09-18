@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>끈스튜디오 - 공유된 작업지시서</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <!-- JSZip for creating zip files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .font-noto {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        /* 카드 호버 효과 */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        /* 이미지 호버 효과 */
+        .image-card img {
+            transition: transform 0.2s ease;
+        }
+
+        .image-card:hover img {
+            transform: scale(1.05);
+        }
+
+        /* 그래디언트 텍스트 */
+        .gradient-text {
+            background: linear-gradient(45deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* 로딩 스피너 */
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .grid.grid-cols-2.md\\:grid-cols-3 {
+                grid-template-columns: repeat(1, minmax(0, 1fr));
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-indigo-100 min-h-screen font-noto">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- 로딩 화면 -->
+        <div id="loading" class="text-center py-20">
+            <i class="fas fa-spinner loading-spinner text-4xl text-indigo-600 mb-4"></i>
+            <p class="text-gray-600">작업지시서를 불러오는 중...</p>
+        </div>
+
+        <!-- 데이터 없음 화면 -->
+        <div id="noData" class="hidden text-center py-20">
+            <i class="fas fa-exclamation-triangle text-4xl text-orange-500 mb-4"></i>
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">작업지시서를 찾을 수 없습니다</h2>
+            <p class="text-gray-600 mb-6">공유 링크가 만료되었거나 올바르지 않습니다.</p>
+            <a href="index.html" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+                <i class="fas fa-home mr-2"></i>홈페이지로 돌아가기
+            </a>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div id="content" class="hidden">
+            <!-- 헤더 -->
+            <div class="text-center mb-8">
+                <div class="mb-4">
+                    <i class="fas fa-camera-retro text-6xl text-indigo-600 mb-4"></i>
+                </div>
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">끈스튜디오</h1>
+                <p class="text-xl text-gray-600 mb-1">공유된 AI 피팅 촬영 작업지시서</p>
+                <p class="text-sm text-gray-500">@kkeunstudio</p>
+            </div>
+
+            <!-- 작업지시서 정보 -->
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-6">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fas fa-clipboard-list mr-3"></i>
+                        작업지시서 정보
+                    </h2>
+                    <p class="text-indigo-100 mt-2" id="shareDate"></p>
+                </div>
+
+                <div class="p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-tag text-indigo-500 mr-3 w-5"></i>
+                                <div>
+                                    <span class="text-sm text-gray-500">브랜드명</span>
+                                    <p class="font-semibold" id="brandName">-</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <i class="fas fa-users text-indigo-500 mr-3 w-5"></i>
+                                <div>
+                                    <span class="text-sm text-gray-500">모델</span>
+                                    <p class="font-semibold" id="modelInfo">-</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-indigo-500 mr-3 w-5"></i>
+                                <div>
+                                    <span class="text-sm text-gray-500">촬영 장소</span>
+                                    <p class="font-semibold" id="locations">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-phone text-indigo-500 mr-3 w-5"></i>
+                                <div>
+                                    <span class="text-sm text-gray-500">연락처</span>
+                                    <p class="font-semibold" id="contact">-</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <i class="fas fa-clock text-indigo-500 mr-3 w-5"></i>
+                                <div>
+                                    <span class="text-sm text-gray-500">작성일시</span>
+                                    <p class="font-semibold" id="timestamp">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <div class="flex items-start">
+                            <i class="fas fa-lightbulb text-indigo-500 mr-3 w-5 mt-1"></i>
+                            <div class="flex-1">
+                                <span class="text-sm text-gray-500">제작 컨셉</span>
+                                <p class="font-medium mt-1" id="concept">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6" id="additionalRequestSection">
+                        <div class="flex items-start">
+                            <i class="fas fa-comment-dots text-indigo-500 mr-3 w-5 mt-1"></i>
+                            <div class="flex-1">
+                                <span class="text-sm text-gray-500">추가 요청사항</span>
+                                <p class="font-medium mt-1" id="additionalRequest">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 상품 사진 섹션 -->
+            <div id="imagesSection" class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div class="bg-gradient-to-r from-green-500 to-teal-600 px-8 py-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white flex items-center">
+                                <i class="fas fa-images mr-3"></i>
+                                상품 사진
+                            </h2>
+                            <p class="text-green-100 mt-2" id="imageCount">업로드된 사진들을 확인하고 다운로드하세요</p>
+                        </div>
+                        <button onclick="downloadAllImagesAsZip()" 
+                                class="bg-white text-green-600 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors font-semibold">
+                            <i class="fas fa-download mr-2"></i>전체 ZIP 다운로드
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-8">
+                    <div id="imageGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- 이미지들이 여기에 동적으로 추가됩니다 -->
+                    </div>
+                    
+                    <div id="noImages" class="hidden text-center py-12">
+                        <i class="fas fa-image text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-500">업로드된 이미지가 없습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 액션 버튼들 -->
+            <div class="mt-8 text-center space-y-4">
+                <button onclick="shareAgain()" 
+                        class="bg-yellow-400 text-gray-800 px-6 py-3 rounded-lg hover:bg-yellow-500 transition-colors font-semibold mr-4">
+                    <i class="fab fa-kickstarter mr-2"></i>다시 공유하기
+                </button>
+                
+                <button onclick="window.print()" 
+                        class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold">
+                    <i class="fas fa-print mr-2"></i>인쇄하기
+                </button>
+                
+                <div class="mt-6">
+                    <a href="index.html" class="text-indigo-600 hover:text-indigo-700 font-medium">
+                        <i class="fas fa-home mr-2"></i>새 작업지시서 작성하기
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 푸터 -->
+        <div class="text-center mt-12 text-gray-500">
+            <p class="text-sm">© 2024 끈스튜디오 | AI 피팅 촬영 서비스</p>
+            <p class="text-xs mt-1">카카오톡 채널: @kkeunstudio</p>
+        </div>
+    </div>
+
+    <script>
+        let sharedOrderData = null;
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSharedData();
+        });
+
+        // 공유된 데이터 로드
+        function loadSharedData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shareId = urlParams.get('id');
+            
+            if (!shareId) {
+                showNoData();
+                return;
+            }
+
+            // 로컬 스토리지에서 데이터 가져오기 (실제 서버 구현 시 API 호출로 변경)
+            const shareData = localStorage.getItem(`share_${shareId}`);
+            
+            if (!shareData) {
+                showNoData();
+                return;
+            }
+
+            try {
+                sharedOrderData = JSON.parse(shareData);
+                displaySharedData();
+            } catch (error) {
+                console.error('데이터 파싱 오류:', error);
+                showNoData();
+            }
+        }
+
+        // 공유된 데이터 표시
+        function displaySharedData() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+            
+            // 기본 정보 표시
+            document.getElementById('brandName').textContent = sharedOrderData.brandName || '-';
+            document.getElementById('concept').textContent = sharedOrderData.concept || '-';
+            document.getElementById('modelInfo').textContent = `${sharedOrderData.gender || '-'} / ${sharedOrderData.race || '-'}`;
+            
+            // 장소 정보
+            let locationText = '-';
+            if (sharedOrderData.locations && sharedOrderData.locations.length > 0) {
+                locationText = sharedOrderData.locations.join(', ');
+                if (sharedOrderData.customLocation) {
+                    locationText += ` (${sharedOrderData.customLocation})`;
+                }
+            }
+            document.getElementById('locations').textContent = locationText;
+            
+            document.getElementById('contact').textContent = sharedOrderData.contact || '-';
+            document.getElementById('timestamp').textContent = sharedOrderData.timestamp || '-';
+            
+            // 추가 요청사항
+            if (sharedOrderData.additionalRequest) {
+                document.getElementById('additionalRequest').textContent = sharedOrderData.additionalRequest;
+            } else {
+                document.getElementById('additionalRequestSection').style.display = 'none';
+            }
+            
+            // 공유 날짜 표시
+            if (sharedOrderData.createdAt) {
+                const shareDate = new Date(sharedOrderData.createdAt).toLocaleString('ko-KR');
+                document.getElementById('shareDate').textContent = `공유일: ${shareDate}`;
+            }
+            
+            // 이미지 표시
+            displayImages();
+        }
+
+        // 이미지들 표시
+        function displayImages() {
+            const imageGrid = document.getElementById('imageGrid');
+            const noImages = document.getElementById('noImages');
+            const imageCount = document.getElementById('imageCount');
+            
+            if (!sharedOrderData.images || sharedOrderData.images.length === 0) {
+                document.getElementById('imagesSection').style.display = 'none';
+                return;
+            }
+
+            imageCount.textContent = `총 ${sharedOrderData.images.length}장의 상품사진`;
+            
+            imageGrid.innerHTML = '';
+            
+            sharedOrderData.images.forEach((imageData, index) => {
+                const imageCard = document.createElement('div');
+                imageCard.className = 'image-card bg-gray-50 rounded-lg overflow-hidden shadow-md card-hover';
+                
+                imageCard.innerHTML = `
+                    <div class="relative">
+                        <img src="${imageData.url}" alt="${imageData.name}" 
+                             class="w-full h-48 object-cover">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
+                            <button onclick="downloadSingleImage(${index})" 
+                                    class="bg-white text-gray-800 px-4 py-2 rounded-lg opacity-0 hover:opacity-100 transition-opacity duration-200 font-semibold">
+                                <i class="fas fa-download mr-2"></i>다운로드
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-800 truncate mb-2">${imageData.name}</h3>
+                        <div class="flex justify-between items-center text-sm text-gray-500">
+                            <span>${formatFileSize(imageData.file.size)}</span>
+                            <button onclick="downloadSingleImage(${index})" 
+                                    class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600 transition-colors">
+                                <i class="fas fa-download mr-1"></i>저장
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                imageGrid.appendChild(imageCard);
+            });
+        }
+
+        // 데이터 없음 화면 표시
+        function showNoData() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('noData').classList.remove('hidden');
+        }
+
+        // 개별 이미지 다운로드
+        function downloadSingleImage(index) {
+            const imageData = sharedOrderData.images[index];
+            if (imageData) {
+                const link = document.createElement('a');
+                link.href = imageData.url;
+                link.download = imageData.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        // 모든 이미지를 ZIP으로 다운로드
+        function downloadAllImagesAsZip() {
+            if (typeof JSZip === 'undefined') {
+                alert('ZIP 생성 라이브러리를 로드할 수 없습니다.');
+                return;
+            }
+            
+            const zip = new JSZip();
+            
+            sharedOrderData.images.forEach((imageData, index) => {
+                // Base64 데이터에서 실제 바이너리 데이터 추출
+                const base64Data = imageData.url.split(',')[1];
+                const binaryData = atob(base64Data);
+                const bytes = new Uint8Array(binaryData.length);
+                for (let i = 0; i < binaryData.length; i++) {
+                    bytes[i] = binaryData.charCodeAt(i);
+                }
+                
+                zip.file(imageData.name, bytes);
+            });
+            
+            zip.generateAsync({type: 'blob'}).then(content => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `끈스튜디오_상품사진_${sharedOrderData.brandName}_${new Date().toISOString().slice(0, 10)}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                
+                alert(`${sharedOrderData.images.length}장의 이미지가 ZIP 파일로 다운로드되었습니다!`);
+            }).catch(error => {
+                console.error('ZIP 생성 중 오류:', error);
+                alert('ZIP 파일 생성 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 다시 공유하기
+        function shareAgain() {
+            const shareUrl = window.location.href;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: '끈스튜디오 작업지시서',
+                    text: `끈스튜디오 AI 피팅 촬영 작업지시서가 공유되었습니다.`,
+                    url: shareUrl
+                }).catch(() => {
+                    copyToClipboard(shareUrl);
+                });
+            } else {
+                copyToClipboard(shareUrl);
+            }
+        }
+
+        // 클립보드에 복사
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('📋 공유 링크가 클립보드에 복사되었습니다!');
+            }).catch(() => {
+                // 폴백
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('📋 공유 링크가 복사되었습니다!');
+            });
+        }
+
+        // 파일 크기 포맷팅 함수
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
+</content>
+</invoke>

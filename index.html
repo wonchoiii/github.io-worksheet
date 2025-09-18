@@ -455,11 +455,6 @@
                         <i class="fab fa-kickstarter mr-2"></i>
                         카카오톡으로 전송
                     </button>
-                    <button id="downloadOrder" 
-                            class="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors">
-                        <i class="fas fa-download mr-2"></i>
-                        이미지 포함 HTML 다운로드
-                    </button>
                     <button id="closeModal" 
                             class="w-full bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
                         닫기
@@ -512,7 +507,6 @@
             // 모달 관련
             document.getElementById('closeModal').addEventListener('click', closeModal);
             document.getElementById('sendKakao').addEventListener('click', sendToKakao);
-            document.getElementById('downloadOrder').addEventListener('click', downloadPDF);
             
             // 라디오 버튼 및 체크박스 스타일링
             setupOptionSelections();
@@ -900,44 +894,79 @@
             modal.classList.remove('flex', 'modal-enter');
         }
 
-        // 카카오톡으로 전송 (실제 카카오톡 앱 열기)
-        function sendToKakao() {
-            const orderSummary = generateOrderSummary();
-            const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n${orderSummary}\n\n📎 첨부파일: HTML 작업지시서 (이미지 ${orderData.images.length}장 포함)\n\n💡 상세 이미지는 다운로드된 HTML 파일에서 확인하실 수 있습니다.\n\n작업 문의: @kkeunstudio`;
-            
-            // 모바일에서는 카카오톡 URL 스킴 사용
-            if (isMobile()) {
-                const kakaoUrl = `kakaotalk://msg?text=${encodeURIComponent(message)}`;
+        // 카카오톡으로 전송 (친구찾기 기능으로 전송)
+        async function sendToKakao() {
+            try {
+                // 서버에 데이터 저장
+                const shareId = await saveOrderDataToServer();
                 
-                // 카카오톡 앱 열기 시도
-                window.location.href = kakaoUrl;
+                // 공유 링크 생성
+                const shareUrl = `${window.location.origin}/share.html?id=${shareId}`;
                 
-                // 1.5초 후 앱이 열리지 않으면 Web Share API 또는 클립보드 복사
-                setTimeout(() => {
+                const orderSummary = generateOrderSummary();
+                const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n${orderSummary}\n\n📎 첨부된 사진들과 상세정보:\n${shareUrl}\n\n💡 위 링크에서 모든 사진을 다운로드하고 상세정보를 확인하세요.\n\n작업 문의: @kkeunstudio`;
+                
+                // 모바일에서 카카오톡 친구찾기 URL 스킴 사용
+                if (isMobile()) {
+                    // 카카오톡 친구찾기로 메시지 전송
+                    const kakaoUrl = `kakaotalk://send?text=${encodeURIComponent(message)}`;
+                    
+                    window.location.href = kakaoUrl;
+                    
+                    // 1.5초 후 앱이 열리지 않으면 Web Share API 또는 클립보드 복사
+                    setTimeout(() => {
+                        if (navigator.share) {
+                            navigator.share({
+                                title: '끈스튜디오 작업지시서',
+                                text: message,
+                                url: shareUrl
+                            }).catch(() => {
+                                copyToClipboard(message);
+                            });
+                        } else {
+                            copyToClipboard(message);
+                        }
+                    }, 1500);
+                } else {
+                    // 데스크톱에서는 Web Share API 또는 클립보드 복사
                     if (navigator.share) {
                         navigator.share({
                             title: '끈스튜디오 작업지시서',
-                            text: message
+                            text: message,
+                            url: shareUrl
                         }).catch(() => {
                             copyToClipboard(message);
                         });
                     } else {
                         copyToClipboard(message);
                     }
-                }, 1500);
-            } else {
-                // 데스크톱에서는 Web Share API 또는 클립보드 복사
-                if (navigator.share) {
-                    navigator.share({
-                        title: '끈스튜디오 작업지시서',
-                        text: message
-                    }).catch(() => {
-                        copyToClipboard(message);
-                    });
-                } else {
-                    copyToClipboard(message);
                 }
+            } catch (error) {
+                console.error('공유 링크 생성 실패:', error);
+                // 실패 시 기본 메시지로 공유
+                const orderSummary = generateOrderSummary();
+                const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n${orderSummary}\n\n작업 문의: @kkeunstudio`;
+                copyToClipboard(message);
             }
+        }
+        
+        // 서버에 주문 데이터 저장
+        async function saveOrderDataToServer() {
+            const shareData = {
+                ...orderData,
+                shareId: generateShareId(),
+                createdAt: new Date().toISOString()
+            };
+            
+            // 로컬 스토리지에 임시 저장 (실제 서버 구현 시 서버로 전송)
+            localStorage.setItem(`share_${shareData.shareId}`, JSON.stringify(shareData));
+            
+            return shareData.shareId;
+        }
+        
+        // 공유 ID 생성
+        function generateShareId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
         }
 
         // 모바일 기기 감지
@@ -1038,127 +1067,7 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        // HTML 형태로 다운로드 (이미지 포함)
-        function downloadPDF() {
-            const orderSummary = generateOrderSummary();
-            
-            // 이미지들을 HTML img 태그로 변환
-            const imageHTML = orderData.images.map((imgData, index) => {
-                return `
-                <div style="margin: 10px 0; page-break-inside: avoid;">
-                    <h4 style="color: #4F46E5; margin: 10px 0 5px 0;">상품사진 ${index + 1}: ${imgData.name}</h4>
-                    <img src="${imgData.url}" alt="${imgData.name}" style="max-width: 300px; max-height: 300px; border: 1px solid #ddd; border-radius: 8px; display: block; margin: 10px 0;">
-                    <p style="font-size: 12px; color: #666; margin: 5px 0;">파일 크기: ${formatFileSize(imgData.file.size)}</p>
-                </div>`;
-            }).join('');
-            
-            const htmlContent = `
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>끈스튜디오 작업지시서 - ${orderData.brandName}</title>
-    <style>
-        body { 
-            font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif; 
-            line-height: 1.6; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 20px;
-            background: #f8f9fa;
-        }
-        .header { 
-            text-align: center; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; 
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }
-        .content { 
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .section { 
-            margin-bottom: 20px; 
-            padding: 15px;
-            border-left: 4px solid #4F46E5;
-            background: #f8f9ff;
-        }
-        .images-section {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f1f5f9;
-            border-radius: 8px;
-        }
-        h1 { color: white; margin: 0; font-size: 28px; }
-        h2 { color: #4F46E5; border-bottom: 2px solid #4F46E5; padding-bottom: 10px; }
-        h3 { color: #1F2937; margin-top: 25px; }
-        .footer { 
-            text-align: center; 
-            margin-top: 40px; 
-            padding: 20px;
-            color: #666;
-            border-top: 1px solid #ddd;
-        }
-        @media print {
-            body { background: white; }
-            .header { background: #4F46E5 !important; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>🎨 끈스튜디오</h1>
-        <p>AI 피팅 촬영 작업지시서</p>
-    </div>
-    
-    <div class="content">
-        <div class="section">
-            <h2>📋 기본 정보</h2>
-            <p><strong>브랜드명:</strong> ${orderData.brandName}</p>
-            <p><strong>제작 컨셉:</strong> ${orderData.concept}</p>
-            <p><strong>모델:</strong> ${orderData.gender} / ${orderData.race}</p>
-            <p><strong>촬영 장소:</strong> ${orderData.locations.join(', ')}${orderData.customLocation ? ` (${orderData.customLocation})` : ''}</p>
-            <p><strong>연락처:</strong> ${orderData.contact}</p>
-            <p><strong>작성일시:</strong> ${orderData.timestamp}</p>
-        </div>
-        
-        <div class="section">
-            <h2>💬 추가 요청사항</h2>
-            <p>${orderData.additionalRequest || '없음'}</p>
-        </div>
-        
-        ${orderData.images.length > 0 ? `
-        <div class="images-section">
-            <h2>📸 업로드된 상품사진 (${orderData.images.length}장)</h2>
-            ${imageHTML}
-        </div>` : ''}
-    </div>
-    
-    <div class="footer">
-        <p>© 2024 끈스튜디오 | AI 피팅 촬영 전문 서비스</p>
-        <p>카카오톡 채널: @kkeunstudio</p>
-    </div>
-</body>
-</html>`;
-            
-            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `끈스튜디오_작업지시서_${orderData.brandName}_${new Date().toISOString().slice(0, 10)}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            alert('이미지가 포함된 작업지시서가 다운로드되었습니다!\n\n💡 브라우저에서 열어서 인쇄하면 PDF로 저장할 수 있습니다.');
-        }
+
     </script>
 </body>
 </html><!-- Updated Thu Sep 18 05:12:59 UTC 2025 -->
