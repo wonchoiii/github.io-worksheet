@@ -32,3 +32,7 @@
 2025-09-18 07:07:14,311 INFO supervisord started with pid 12684
 2025-09-18 07:07:15,324 INFO spawned: 'webserver' with pid 12686
 2025-09-18 07:07:16,542 INFO success: webserver entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-09-18 07:08:49,298 INFO waiting for webserver to stop
+2025-09-18 07:08:49,301 WARN stopped: webserver (terminated by SIGTERM)
+2025-09-18 07:08:49,308 INFO spawned: 'webserver' with pid 12829
+2025-09-18 07:08:50,418 INFO success: webserver entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
