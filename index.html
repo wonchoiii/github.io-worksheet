@@ -9,8 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <!-- 카카오톡 SDK -->
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
-    <!-- JSZip for creating zip files -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <style>
         /* 커스텀 CSS */
         body {
@@ -446,19 +445,11 @@
                 <h3 class="text-2xl font-bold text-gray-800 mb-4">작업지시서 완료!</h3>
                 <p class="text-gray-600 mb-4">작업지시서가 성공적으로 저장되었습니다.<br>카카오톡으로 전송해 주세요!</p>
                 
-                <!-- 업로드된 이미지 미리보기 -->
-                <div id="modalImagePreview" class="mb-6"></div>
-                
                 <div class="space-y-3">
                     <button id="sendKakao" 
                             class="w-full bg-yellow-400 text-gray-800 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-500 transition-colors">
                         <i class="fab fa-kickstarter mr-2"></i>
                         카카오톡으로 전송
-                    </button>
-                    <button onclick="downloadAllImagesAsZip()" 
-                            class="w-full bg-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors">
-                        <i class="fas fa-download mr-2"></i>
-                        상품사진 ZIP 다운로드
                     </button>
                     <button id="closeModal" 
                             class="w-full bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
@@ -899,17 +890,11 @@
             modal.classList.remove('flex', 'modal-enter');
         }
 
-        // 카카오톡으로 전송 (친구찾기 기능으로 전송)
-        async function sendToKakao() {
-            const orderSummary = generateOrderSummary();
-            
-            // 이미지 파일명과 개수 정보 추가
-            const imageInfo = orderData.images.length > 0 
-                ? `\n\n📸 첨부된 상품사진 (${orderData.images.length}장):\n` + 
-                  orderData.images.map((img, index) => `   ${index + 1}. ${img.name}`).join('\n')
-                : '\n\n📸 상품사진: 없음';
-            
-            const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n${orderSummary}${imageInfo}\n\n💡 상품사진은 별도로 전달드리겠습니다.\n\n작업 문의: @kkeunstudio`;
+        // 카카오톡으로 전송 (링크 복사)
+        function sendToKakao() {
+            // 현재 페이지 URL을 카카오톡으로 공유
+            const shareUrl = window.location.href;
+            const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n아래 링크에서 작업지시서를 확인해주세요:\n${shareUrl}\n\n작업 문의: @kkeunstudio`;
             
             // 모바일에서 카카오톡 친구찾기 URL 스킴 사용
             if (isMobile()) {
@@ -923,7 +908,8 @@
                     if (navigator.share) {
                         navigator.share({
                             title: '끈스튜디오 작업지시서',
-                            text: message
+                            text: message,
+                            url: shareUrl
                         }).catch(() => {
                             copyToClipboard(message);
                         });
@@ -936,7 +922,8 @@
                 if (navigator.share) {
                     navigator.share({
                         title: '끈스튜디오 작업지시서',
-                        text: message
+                        text: message,
+                        url: shareUrl
                     }).catch(() => {
                         copyToClipboard(message);
                     });
@@ -958,61 +945,12 @@
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         }
 
-        // 개별 이미지 다운로드
-        function downloadSingleImage(index) {
-            const imageData = orderData.images[index];
-            if (imageData) {
-                const link = document.createElement('a');
-                link.href = imageData.url;
-                link.download = imageData.name;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        }
 
-        // 모든 이미지를 ZIP으로 다운로드
-        function downloadAllImagesAsZip() {
-            if (typeof JSZip === 'undefined') {
-                alert('ZIP 생성 라이브러리를 로드할 수 없습니다.');
-                return;
-            }
-            
-            const zip = new JSZip();
-            const promises = [];
-            
-            orderData.images.forEach((imageData, index) => {
-                // Base64 데이터에서 실제 바이너리 데이터 추출
-                const base64Data = imageData.url.split(',')[1];
-                const binaryData = atob(base64Data);
-                const bytes = new Uint8Array(binaryData.length);
-                for (let i = 0; i < binaryData.length; i++) {
-                    bytes[i] = binaryData.charCodeAt(i);
-                }
-                
-                zip.file(imageData.name, bytes);
-            });
-            
-            zip.generateAsync({type: 'blob'}).then(content => {
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(content);
-                link.download = `끈스튜디오_상품사진_${orderData.brandName}_${new Date().toISOString().slice(0, 10)}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-                
-                alert(`${orderData.images.length}장의 이미지가 ZIP 파일로 다운로드되었습니다!`);
-            }).catch(error => {
-                console.error('ZIP 생성 중 오류:', error);
-                alert('ZIP 파일 생성 중 오류가 발생했습니다.');
-            });
-        }
 
         // 클립보드에 복사
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('📋 작업지시서 내용이 클립보드에 복사되었습니다!\n\n💡 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.\n\n📎 상품사진은 아래 ZIP 다운로드 버튼으로 별도 전달해 주세요.');
+                alert('📋 링크가 클립보드에 복사되었습니다!\n\n💡 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.');
             }).catch(() => {
                 // 폴백: 텍스트 선택
                 const textArea = document.createElement('textarea');
@@ -1021,7 +959,7 @@
                 textArea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
-                alert('📋 작업지시서 내용이 복사되었습니다!\n\n💡 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.\n\n📎 상품사진은 아래 ZIP 다운로드 버튼으로 별도 전달해 주세요.');
+                alert('📋 링크가 복사되었습니다!\n\n💡 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.');
             });
         }
 
