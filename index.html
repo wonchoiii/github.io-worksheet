@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>끈스튜디오 - AI 피팅 촬영 작업지시서</title>
-    <meta name="cache-bust" content="2025091814">
+    <meta name="cache-bust" content="2025091815">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
@@ -41,17 +41,27 @@
             @apply border-indigo-400 bg-indigo-50;
         }
 
-        /* 이미지 미리보기 스타일 */
+        /* 이미지 미리보기 스타일 - 개선된 크기와 가시성 */
         .image-preview-item {
-            @apply relative rounded-lg overflow-hidden shadow-md;
+            @apply relative rounded-lg overflow-hidden shadow-lg border-2 border-gray-200 bg-white;
+            transition: all 0.2s ease;
+        }
+        
+        .image-preview-item:hover {
+            @apply border-indigo-300 shadow-xl transform scale-105;
         }
 
         .image-preview-item img {
-            @apply w-full h-24 object-cover;
+            @apply w-full h-32 md:h-40 object-cover;
         }
 
         .image-preview-item .remove-btn {
-            @apply absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs cursor-pointer hover:bg-red-600;
+            @apply absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm cursor-pointer hover:bg-red-600 shadow-lg;
+            transition: all 0.2s ease;
+        }
+        
+        .image-preview-item .remove-btn:hover {
+            @apply transform scale-110;
         }
 
         /* 폼 애니메이션 */
@@ -135,6 +145,11 @@
                 @apply grid-cols-2;
             }
             
+            /* 이미지 미리보기 모바일 최적화 */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3 {
+                @apply grid-cols-1 gap-4;
+            }
+            
             /* 모바일 텍스트 크기 조정 */
             h1 {
                 @apply text-2xl;
@@ -146,7 +161,11 @@
             
             /* 모바일 버튼 크기 조정 */
             button[type="submit"] {
-                @apply py-3 text-sm;
+                @apply py-3;
+            }
+            
+            button[type="submit"] span {
+                @apply text-xs leading-tight;
             }
             
             /* 모바일 입력 필드 조정 */
@@ -407,7 +426,7 @@
                             <p class="text-sm text-gray-400">PNG, JPG, JPEG 파일을 선택해 주세요 (최대 10MB)</p>
                         </label>
                     </div>
-                    <div id="imagePreview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 hidden"></div>
+                    <div id="imagePreview" class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden"></div>
                 </div>
 
                 <!-- 연락처 -->
@@ -435,9 +454,9 @@
                     <button type="submit" 
                             id="submitButton"
                             onclick="console.log('버튼 클릭 - onclick 이벤트'); handleFormSubmitDirect(event);"
-                            class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-indigo-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                            class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold py-4 px-4 rounded-lg hover:from-indigo-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
                         <i class="fas fa-download mr-2"></i>
-                        작업지시서와 이미지 다운로드
+                        <span class="text-sm md:text-base">작업지시서 다운로드 (다운로드 후 카카오톡으로 보내주세요)</span>
                     </button>
                 </div>
             </form>
@@ -739,17 +758,25 @@
             });
         }
 
-        // 이미지 미리보기 추가
+        // 이미지 미리보기 추가 - 개선된 크기와 가시성
         function addImagePreview(imageData, index) {
             const preview = document.getElementById('imagePreview');
             const div = document.createElement('div');
             div.className = 'image-preview-item relative';
             div.innerHTML = `
-                <img src="${imageData.url}" alt="${imageData.name}" class="w-full h-24 object-cover rounded-lg">
-                <button type="button" class="remove-btn" onclick="removeImage(${index})">
-                    <i class="fas fa-times"></i>
-                </button>
-                <p class="text-xs text-gray-500 mt-1 truncate">${imageData.name}</p>
+                <div class="relative">
+                    <img src="${imageData.url}" alt="${imageData.name}" class="w-full h-32 md:h-40 object-cover rounded-lg cursor-pointer" onclick="viewFullImage('${imageData.url}', '${imageData.name}')">
+                    <button type="button" class="remove-btn absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm cursor-pointer hover:bg-red-600 shadow-lg" onclick="removeImage(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-3">
+                    <p class="text-sm font-medium text-gray-700 truncate">${imageData.name}</p>
+                    <p class="text-xs text-gray-500 mt-1">${formatFileSize(imageData.file.size)}</p>
+                    <div class="text-xs text-indigo-600 mt-1">
+                        <i class="fas fa-eye mr-1"></i>클릭하여 크게 보기
+                    </div>
+                </div>
             `;
             preview.appendChild(div);
         }
@@ -1057,7 +1084,7 @@
             buttonContainer.insertAdjacentHTML('beforebegin', imagePreviewHtml);
         }
 
-        // 작업지시서 HTML과 이미지를 별도 다운로드
+        // 작업지시서 HTML 파일만 다운로드 (이미지는 HTML 내 임베디드)
         async function downloadAllAsZipDirect() {
             try {
                 console.log('다운로드 함수 시작');
@@ -1070,7 +1097,7 @@
                 const timestamp = new Date().toISOString().slice(0, 10);
                 const brandName = orderData.brandName || 'unnamed';
                 
-                // 1. 작업지시서 HTML 파일 다운로드
+                // 작업지시서 HTML 파일 다운로드 (이미지 포함)
                 console.log('작업지시서 HTML 파일 생성');
                 const htmlContent = createOrderSummaryHTML();
                 const htmlBlob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
@@ -1086,59 +1113,18 @@
                 
                 console.log('HTML 파일 다운로드 완료:', htmlFileName);
                 
-                // 2. 이미지 파일들 다운로드 (있는 경우)
-                if (orderData.images && orderData.images.length > 0) {
-                    console.log('이미지 파일 다운로드 시작:', orderData.images.length, '장');
-                    
-                    // 약간의 지연을 두고 이미지들을 순차적으로 다운로드
-                    for (let i = 0; i < orderData.images.length; i++) {
-                        const imageData = orderData.images[i];
-                        console.log(`이미지 ${i + 1} 다운로드 중:`, imageData.name);
-                        
-                        try {
-                            // 약간의 지연 (브라우저가 다운로드를 처리할 시간 제공)
-                            await new Promise(resolve => setTimeout(resolve, 300));
-                            
-                            // Base64 이미지를 Blob으로 변환
-                            const response = await fetch(imageData.url);
-                            const blob = await response.blob();
-                            
-                            // 파일 확장자 추출
-                            const extension = imageData.name.split('.').pop() || 'jpg';
-                            const imageFileName = `${brandName}_상품사진_${i + 1}.${extension}`;
-                            
-                            // 이미지 파일 다운로드
-                            const imageLink = document.createElement('a');
-                            imageLink.href = URL.createObjectURL(blob);
-                            imageLink.download = imageFileName;
-                            document.body.appendChild(imageLink);
-                            imageLink.click();
-                            document.body.removeChild(imageLink);
-                            
-                            console.log(`이미지 ${i + 1} 다운로드 완료:`, imageFileName);
-                        } catch (imageError) {
-                            console.error(`이미지 ${i + 1} 다운로드 오류:`, imageError);
-                            // 개별 이미지 오류는 건너뛰고 계속 진행
-                        }
-                    }
-                }
-                
                 // 성공 메시지 표시
                 const imageCount = orderData.images ? orderData.images.length : 0;
-                const downloadedFiles = [];
-                downloadedFiles.push(`📄 ${htmlFileName}`);
-                if (imageCount > 0) {
-                    downloadedFiles.push(`🖼️ 상품사진 ${imageCount}장`);
-                }
                 
-                alert(`✅ 다운로드 완료!
+                alert(`✅ 작업지시서 다운로드 완료!
 
-📦 다운로드된 파일들:
-${downloadedFiles.map(file => `• ${file}`).join('\n')}
+📄 다운로드된 파일: ${htmlFileName}
+${imageCount > 0 ? `🖼️ 이미지 ${imageCount}장이 HTML 파일에 포함되어 있습니다` : '📸 업로드된 이미지가 없습니다'}
 
-💡 브라우저 다운로드 폴더를 확인하세요!
+💡 사용 방법:
 • HTML 파일을 더블클릭하면 작업지시서를 볼 수 있습니다
-• 상품사진들은 개별 파일로 저장되었습니다`);
+• 이미지도 함께 볼 수 있으며 브라우저에서 오른쪽 클릭으로 저장 가능합니다
+• 카카오톡으로 작업지시서를 공유해 주세요!`);
                 
             } catch (error) {
                 console.error('다운로드 오류:', error);
@@ -1548,23 +1534,34 @@ ${url}
         }
         .image-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
             margin: 1rem 0;
         }
         .image-item {
             text-align: center;
             background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+        .image-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         }
         .product-image {
             width: 100%;
-            height: 120px;
+            height: 200px;
             object-fit: cover;
-            border-radius: 6px;
+            border-radius: 8px;
             margin-bottom: 0.5rem;
+            cursor: pointer;
+            border: 1px solid #d1d5db;
+        }
+        .product-image:hover {
+            opacity: 0.9;
         }
         .image-name {
             font-size: 0.875rem;
@@ -1686,6 +1683,33 @@ ${url}
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
+        // 이미지 전체 크기로 보기 기능
+        function viewFullImage(imageSrc, imageName) {
+            // 모달 생성
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            modal.onclick = function() {
+                document.body.removeChild(modal);
+            };
+            
+            modal.innerHTML = `
+                <div class="max-w-4xl max-h-full p-4">
+                    <div class="relative">
+                        <img src="${imageSrc}" alt="${imageName}" class="max-w-full max-h-screen object-contain rounded-lg">
+                        <button onclick="event.stopPropagation(); document.body.removeChild(this.closest('.fixed'))" 
+                                class="absolute top-4 right-4 bg-white text-black rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                            <i class="fas fa-times text-lg"></i>
+                        </button>
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4 rounded-b-lg">
+                            <p class="text-center font-medium">${imageName}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
         // 클립보드에 복사 (기존 함수 유지)
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
@@ -1709,5 +1733,5 @@ ${url}
 
     </script>
 </body>
-</html><!-- Updated Thu Sep 18 09:00:00 UTC 2025 -->
-<!-- Cache busted: 2025091814 -->
+</html><!-- Updated Thu Sep 18 15:00:00 UTC 2025 -->
+<!-- Cache busted: 2025091815 -->
