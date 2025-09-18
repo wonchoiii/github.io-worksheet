@@ -431,8 +431,8 @@
                 <div class="pt-6">
                     <button type="submit" 
                             class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-indigo-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
-                        <i class="fas fa-paper-plane mr-2"></i>
-                        작업지시서 완료하고 카카오톡으로 링크 보내기
+                        <i class="fas fa-copy mr-2"></i>
+                        작업지시서 완료 후 링크 복사하기
                     </button>
                 </div>
             </form>
@@ -447,9 +447,9 @@
                 
                 <div class="space-y-3">
                     <button id="sendKakao" 
-                            class="w-full bg-yellow-400 text-gray-800 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-500 transition-colors">
-                        <i class="fab fa-kickstarter mr-2"></i>
-                        카카오톡으로 전송
+                            class="w-full bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-copy mr-2"></i>
+                        링크 복사하기
                     </button>
                     <button id="closeModal" 
                             class="w-full bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
@@ -886,49 +886,14 @@
             modal.classList.remove('flex', 'modal-enter');
         }
 
-        // 카카오톡으로 전송 (데이터 링크 생성 및 공유)
+        // 링크 복사 기능
         function sendToKakao() {
             // 주문 데이터를 Base64로 인코딩하여 URL에 포함
             const encodedData = encodeOrderDataToURL();
             const shareUrl = `${window.location.origin}${window.location.pathname}#data=${encodedData}`;
             
-            const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n📋 작업지시서 확인 및 이미지 다운로드:\n${shareUrl}\n\n💡 위 링크에서 모든 정보와 첨부된 상품사진을 확인하고 다운로드할 수 있습니다.\n\n작업 문의: @kkeunstudio`;
-            
-            // 모바일에서 카카오톡 친구찾기 URL 스킴 사용
-            if (isMobile()) {
-                // 카카오톡 친구찾기로 메시지 전송
-                const kakaoUrl = `kakaotalk://send?text=${encodeURIComponent(message)}`;
-                
-                window.location.href = kakaoUrl;
-                
-                // 1.5초 후 앱이 열리지 않으면 Web Share API 또는 클립보드 복사
-                setTimeout(() => {
-                    if (navigator.share) {
-                        navigator.share({
-                            title: '끈스튜디오 작업지시서',
-                            text: message,
-                            url: shareUrl
-                        }).catch(() => {
-                            copyToClipboard(message);
-                        });
-                    } else {
-                        copyToClipboard(message);
-                    }
-                }, 1500);
-            } else {
-                // 데스크톱에서는 Web Share API 또는 클립보드 복사
-                if (navigator.share) {
-                    navigator.share({
-                        title: '끈스튜디오 작업지시서',
-                        text: message,
-                        url: shareUrl
-                    }).catch(() => {
-                        copyToClipboard(message);
-                    });
-                } else {
-                    copyToClipboard(message);
-                }
-            }
+            // 링크를 클립보드에 복사
+            copyLinkToClipboard(shareUrl);
         }
         
         // 주문 데이터를 URL에 인코딩
@@ -1091,7 +1056,23 @@
             }
         }
         
-        // 클립보드에 복사
+        // 링크 복사 전용 함수
+        function copyLinkToClipboard(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('링크가 복사되었습니다. 카카오톡으로 링크를 보내주세요.');
+            }).catch(() => {
+                // 폴백: 텍스트 선택
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('링크가 복사되었습니다. 카카오톡으로 링크를 보내주세요.');
+            });
+        }
+        
+        // 클립보드에 복사 (기존 함수 유지)
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
                 alert('📋 링크가 클립보드에 복사되었습니다!\n\n💡 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.');
