@@ -806,7 +806,7 @@
             processFormSubmission();
         }
 
-        // 실제 폼 처리 로직
+        // 실제 폼 처리 로직 - 바로 링크 생성
         function processFormSubmission() {
             console.log('processFormSubmission 함수 시작');
             
@@ -826,17 +826,18 @@
                 console.log('폼 데이터 수집 시작');
                 collectFormData();
                 
-                // 간단한 지연 후 모달 표시
-                console.log('모달 표시 예약 (1초 후)');
+                // 바로 링크 생성 및 복사
+                console.log('링크 생성 시작');
                 setTimeout(() => {
-                    console.log('모달 표시 시작');
+                    console.log('링크 생성 및 복사 실행');
                     hideLoading();
-                    showResultModal();
-                    console.log('모달 표시 완료');
+                    generateAndCopyLink();
+                    console.log('링크 생성 완료');
                 }, 1000);
                 
             } catch (error) {
                 console.error('processFormSubmission 오류:', error);
+                hideLoading();
                 alert('오류가 발생했습니다: ' + error.message);
             }
         }
@@ -1017,6 +1018,32 @@
             // 버튼들 앞에 이미지 미리보기 삽입
             const buttonContainer = modalContent.querySelector('.space-y-3');
             buttonContainer.insertAdjacentHTML('beforebegin', imagePreviewHtml);
+        }
+
+        // 바로 링크 생성 및 복사
+        function generateAndCopyLink() {
+            try {
+                // 주문 데이터를 Base64로 인코딩하여 URL에 포함
+                const encodedData = encodeOrderDataToURL();
+                
+                if (!encodedData) {
+                    alert('❌ 링크 생성에 실패했습니다. 다시 시도해 주세요.');
+                    return;
+                }
+                
+                // GitHub Pages URL을 사용하여 링크 생성
+                const baseUrl = getBaseUrl();
+                const shareUrl = `${baseUrl}#data=${encodedData}`;
+                
+                console.log('생성된 공유 링크:', shareUrl);
+                
+                // 링크를 클립보드에 복사
+                copyLinkToClipboard(shareUrl);
+                
+            } catch (error) {
+                console.error('링크 생성 오류:', error);
+                alert('링크 생성 중 오류가 발생했습니다: ' + error.message);
+            }
         }
 
         // 모달 닫기
@@ -1289,12 +1316,26 @@
         // 복사 성공 메시지 표시
         function showCopySuccessMessage(url) {
             const shortUrl = url.length > 80 ? url.substring(0, 80) + '...' : url;
-            alert(`✅ 작업지시서 링크가 복사되었습니다!
+            
+            // 포함된 데이터 요약
+            const dataInfo = [];
+            if (orderData.brandName) dataInfo.push('브랜드 정보');
+            if (orderData.concept) dataInfo.push('컨셉 설명');
+            if (orderData.gender || orderData.race) dataInfo.push('모델 정보');
+            if (orderData.contact) dataInfo.push('연락처');
+            if (orderData.images && orderData.images.length > 0) dataInfo.push(`상품사진 ${orderData.images.length}장`);
+            
+            const includesText = dataInfo.length > 0 ? `\n\n📦 포함된 내용: ${dataInfo.join(', ')}` : '';
+            
+            alert(`✅ 작업지시서 다운로드 링크가 생성되었습니다!
 
-📋 복사된 링크: ${shortUrl}
+📋 복사된 링크: ${shortUrl}${includesText}
 
-💡 이제 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.
-받는 분이 링크를 클릭하면 작업지시서 정보와 상품사진을 확인하고 다운로드할 수 있습니다.`);
+💡 사용 방법:
+• 카카오톡에 링크를 붙여넣기하여 공유
+• 링크를 클릭하면 모든 정보를 확인 가능
+• 상품사진과 작업지시서를 다운로드 가능
+• ZIP 파일로 한번에 모든 자료 저장 가능`);
         }
         
         // 복사 실패 메시지 표시
