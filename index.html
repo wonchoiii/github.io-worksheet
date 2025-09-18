@@ -3,1261 +3,910 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>인터랙티브 작업 지시서</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>끈스튜디오 - AI 피팅 촬영 작업지시서</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+        /* 커스텀 CSS */
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f8fafc; /* bg-slate-50 */
-        }
-        .section-card {
-            background-color: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .form-input {
-            width: 100%;
-            border-radius: 0.375rem;
-            border: 1px solid #D1D5DB;
-            padding: 0.5rem 0.75rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            background-color: #f9fafb;
-        }
-        .form-input:focus {
-            outline: none;
-            border-color: #3B82F6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
-            background-color: white;
-        }
-        .form-input:read-only {
-            background-color: #e2e8f0;
-            cursor: default;
-        }
-        .form-input:disabled { /* Add style for disabled inputs */
-            background-color: #e2e8f0;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-        .form-label {
-            display: block;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 0.5rem;
-        }
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-weight: 600;
-            color: white;
-            transition: background-color 0.2s, transform 0.1s;
-            cursor: pointer;
-        }
-        .btn:active {
-            transform: scale(0.98);
-        }
-        .btn-primary {
-            background-color: #2563EB;
-        }
-        .btn-primary:hover {
-            background-color: #1D4ED8;
-        }
-        .btn-secondary {
-            background-color: #4B5563;
-        }
-        .btn-secondary:hover {
-            background-color: #1F2937;
-        }
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-size: 0.95rem; /* Slightly larger text for labels */
-            color: #1F2937; /* Darker text for better readability */
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.375rem;
-            transition: background-color 0.2s;
-        }
-         .checkbox-label:hover {
-            background-color: #e5e7eb; /* Lighter hover background */
-        }
-        .checkbox {
-            margin-right: 0.5rem;
-            height: 1.25rem; /* Larger checkbox */
-            width: 1.25rem;  /* Larger checkbox */
-            min-width: 1.25rem; /* Ensure minimum width for consistency */
-            border-radius: 0.25rem;
-            border: 1px solid #6B7280; /* Darker border for clarity */
-            accent-color: #1E40AF; /* Darker blue when checked */
-            transition: all 0.2s ease-in-out; /* Smooth transition for checkmark */
-            /* Add custom checkmark appearance for better visibility across browsers if needed */
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-color: #fff;
-            position: relative;
-        }
-        .checkbox:checked {
-            background-color: #1E40AF; /* Darker blue background when checked */
-            border-color: #1E40AF; /* Darker blue border when checked */
-        }
-        .checkbox:checked::before {
-            content: '✔'; /* Custom checkmark character */
-            display: block;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.85rem; /* Adjust checkmark size */
-            color: white; /* White checkmark */
-        }
-        .checkbox:disabled {
-            background-color: #D1D5DB; /* Greyer when disabled */
-            border-color: #9CA3AF;
-            cursor: not-allowed;
-            opacity: 1; /* Keep opacity at 1 so checkmark is clearly visible */
-        }
-        .checkbox:disabled:checked {
-            background-color: #3B82F6; /* Keep it blue even when checked & disabled for visibility */
-            border-color: #3B82F6;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            visibility: hidden;
-            opacity: 0;
-            transition: visibility 0s, opacity 0.3s ease-in-out;
-        }
-        .modal-overlay.show {
-            visibility: visible;
-            opacity: 1;
-        }
-        .modal-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            width: 90%;
-            max-width: 700px;
-            max-height: 90vh;
-            overflow-y: auto;
-            transform: translateY(20px);
-            transition: transform 0.3s ease-in-out;
-        }
-        .modal-overlay.show .modal-content {
-            transform: translateY(0);
-        }
-        .modal-text-area {
-            width: 100%;
-            min-height: 200px;
-            max-height: 50vh;
-            border: 1px solid #D1D5DB;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            font-family: monospace;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            resize: vertical;
-            background-color: #f9fafb;
-            color: #374151;
-        }
-        /* Style for image previews */
-        .image-preview {
-            width: 200px; /* Adjust size as needed */
-            height: 200px; /* Adjust size as needed */
-            object-fit: contain; /* or 'cover' */
-            border-radius: 0.375rem;
-            margin-top: 0.5rem;
-            border: 1px solid #E5E7EB; /* border-gray-200 */
-        }
-        /* Style for product titles */
-        .product-card-title {
-            font-size: 1.6rem; /* Larger font size */
-            font-weight: 700; /* Bolder */
-            color: #0047AB; /* A distinct blue color */
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #D1D5DB; /* Subtle underline */
-            margin-bottom: 1rem;
-            display: block; /* Ensures padding and border work correctly */
         }
 
-        /* Style for disabling section */
-        .section-disabled {
-            pointer-events: none; /* Disables all clicks within the section */
-            opacity: 0.4; /* Visually indicates disabled state */
-            user-select: none; /* Prevents text selection */
+        .font-noto {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        /* 라디오 버튼 및 체크박스 스타일링 */
+        .gender-option:has(input:checked),
+        .race-option:has(input:checked),
+        .location-option:has(input:checked) {
+            @apply border-indigo-500 bg-indigo-50;
+        }
+
+        .gender-option:has(input:checked) i,
+        .race-option:has(input:checked) span,
+        .location-option:has(input:checked) span {
+            @apply text-indigo-600;
+        }
+
+        /* 파일 업로드 영역 호버 효과 */
+        .file-upload-area:hover {
+            @apply border-indigo-400 bg-indigo-50;
+        }
+
+        /* 이미지 미리보기 스타일 */
+        .image-preview-item {
+            @apply relative rounded-lg overflow-hidden shadow-md;
+        }
+
+        .image-preview-item img {
+            @apply w-full h-24 object-cover;
+        }
+
+        .image-preview-item .remove-btn {
+            @apply absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs cursor-pointer hover:bg-red-600;
+        }
+
+        /* 폼 애니메이션 */
+        .form-group {
+            @apply transform transition-all duration-200;
+        }
+
+        .form-group:hover {
+            @apply translate-y-[-2px];
+        }
+
+        /* 버튼 애니메이션 */
+        button {
+            @apply transition-all duration-200;
+        }
+
+        /* 모달 애니메이션 */
+        .modal-enter {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* 스크롤바 커스터마이징 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 반응형 디자인 개선 */
+        @media (max-width: 768px) {
+            .container {
+                @apply px-2;
+            }
+            
+            .form-group label {
+                @apply text-xs;
+            }
+            
+            .gender-option,
+            .race-option,
+            .location-option {
+                @apply p-2 text-sm;
+            }
+            
+            .gender-option i {
+                @apply text-xl mb-1;
+            }
+            
+            /* 모바일에서 그리드 조정 */
+            .grid.grid-cols-3 {
+                @apply grid-cols-1;
+            }
+            
+            .grid.grid-cols-2.md\\:grid-cols-4 {
+                @apply grid-cols-2;
+            }
+            
+            .grid.grid-cols-2.md\\:grid-cols-3 {
+                @apply grid-cols-2;
+            }
+            
+            /* 모바일 텍스트 크기 조정 */
+            h1 {
+                @apply text-2xl;
+            }
+            
+            h2 {
+                @apply text-xl;
+            }
+            
+            /* 모바일 버튼 크기 조정 */
+            button[type="submit"] {
+                @apply py-3 text-sm;
+            }
+            
+            /* 모바일 입력 필드 조정 */
+            input, textarea, select {
+                @apply text-base py-2;
+            }
+            
+            /* 모바일 모달 조정 */
+            #resultModal > div {
+                @apply mx-2 max-w-sm;
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* 초소형 화면 대응 */
+            .gender-option,
+            .race-option,
+            .location-option {
+                @apply p-1 text-xs;
+            }
+            
+            .gender-option i {
+                @apply text-lg;
+            }
+            
+            .grid.grid-cols-2 {
+                @apply grid-cols-1;
+            }
+            
+            /* 헤더 아이콘 크기 조정 */
+            .fa-camera-retro {
+                @apply text-4xl;
+            }
+            
+            /* 폼 패딩 조정 */
+            .bg-white.rounded-2xl > form {
+                @apply p-4;
+            }
+            
+            .bg-gradient-to-r.from-indigo-500 {
+                @apply px-4 py-4;
+            }
+        }
+
+        /* 테블릿 최적화 */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .container {
+                @apply px-4;
+            }
+            
+            .grid.grid-cols-2.md\\:grid-cols-4 {
+                @apply grid-cols-3;
+            }
+        }
+
+        /* 체크 표시 애니메이션 */
+        .check-animation {
+            animation: checkBounce 0.6s ease-in-out;
+        }
+
+        @keyframes checkBounce {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* 로딩 스피너 */
+        .loading-spinner {
+            @apply animate-spin rounded-full h-8 w-8 border-b-2 border-white;
+        }
+
+        /* 그래디언트 텍스트 */
+        .gradient-text {
+            background: linear-gradient(45deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* 카드 호버 효과 */
+        .card-hover {
+            @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+        }
+
+        /* 스타일 보완 - 선택된 옵션 스타일 */
+        .gender-option.selected,
+        .race-option.selected,
+        .location-option.selected {
+            border-color: #6366f1 !important;
+            background-color: #eef2ff !important;
+        }
+
+        .gender-option.selected i,
+        .race-option.selected span,
+        .location-option.selected span {
+            color: #6366f1 !important;
         }
     </style>
 </head>
-<body>
-
-    <div class="container mx-auto max-w-5xl p-4 sm:p-8">
-        
-        <header class="text-center mb-10">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">작업 지시서</h1>
-            <p class="mt-2 text-lg text-gray-600">의류/잡화 촬영 가이드라인</p>
-        </header>
-
-        <main>
-            <section id="basic-info" class="section-card">
-                <h2 class="text-2xl font-bold mb-6 border-b pb-3">기본 정보</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    <div>
-                        <label for="shoot-date" class="form-label">촬영일</label>
-                        <input type="date" id="shoot-date" class="form-input">
-                    </div>
-                    <div>
-                        <label for="brand-name" class="form-label">브랜드명 / 업체명</label>
-                        <input type="text" id="brand-name" class="form-input" placeholder="브랜드 또는 업체명">
-                    </div>
-                    <div>
-                        <label for="shoot-type" class="form-label">촬영 종류</label>
-                        <select id="shoot-type" class="form-input">
-                            <option value="">선택하세요</option>
-                            <option value="natural-light">자연광</option>
-                            <option value="cut-out">누끼</option>
-                            <option value="ghost">고스트</option>
-                            <option value="styled-shoot">연출컷</option>
-                        </select>
-                    </div>
-                    <div id="background-color-group" style="display: none;">
-                        <label for="background-color" class="form-label">배경 색상</label>
-                        <select id="background-color" class="form-input" disabled>
-                            <option value="">선택하세요</option>
-                            <option value="white">화이트</option>
-                            <option value="black">블랙</option>
-                            <option value="red">레드</option>
-                            <option value="blue">블루</option>
-                            <option value="gray">그레이</option>
-                        </select>
-                    </div>
-                     <div>
-                        <label for="image-ratio" class="form-label">사진 비율</label>
-                        <select id="image-ratio" class="form-input">
-                            <option value="">선택하세요</option>
-                            <option value="2:3">2:3 (세로형)</option>
-                            <option value="4:5">4:5 (세로형)</option>
-                            <option value="1:1">1:1 (정사각형)</option>
-                            <option value="3:4">3:4 (세로형)</option>
-                            <option value="16:9">16:9 (가로형)</option>
-                            <option value="custom">직접 입력</option>
-                        </select>
-                    </div>
-                    <div id="custom-ratio-group" style="display: none;">
-                        <label for="custom-ratio" class="form-label">사진 비율 (직접 입력)</label>
-                        <input type="text" id="custom-ratio" class="form-input" placeholder="예: 3:2, 16:10" disabled>
-                    </div>
-                </div>
-            </section>
-
-            <section id="product-requests" class="section-card">
-                <h2 class="text-2xl font-bold mb-2">1. 제품 촬영 요청 양식</h2>
-                <p class="text-gray-600 mb-6">제품 정보를 입력하고 필수 촬영 컷을 체크해주세요. 제품을 추가하려면 하단의 '제품 추가' 버튼을 클릭하세요.</p>
-                <div id="product-list" class="space-y-8">
-                    </div>
-                <div class="mt-8 text-center">
-                    <button id="add-product-btn" class="btn btn-primary">＋ 제품 추가</button>
-                </div>
-            </section>
-
-            <section id="additional-requests" class="section-card">
-                <h2 class="text-2xl font-bold mb-2">2. 연출컷 촬영 요청</h2>
-                 <p class="text-gray-600 mb-6">연출컷 촬영을 희망하시는 경우에만 아래에 상세 내용을 기재해주세요.</p>
-                <div id="additional-detail-list" class="space-y-6">
-                   </div>
-                 <div class="mt-8 text-center">
-                    <button id="add-additional-detail-btn" class="btn btn-secondary">＋ 연출컷 요청 항목 추가</button>
-                </div>
-            </section>
-
-            <section id="general-comments" class="section-card">
-                <h2 class="text-2xl font-bold mb-4">3. 추가 요청 사항 및 코멘트</h2>
-                <div>
-                    <label for="comments" class="form-label">주름 주의해주세요, 리본 묶는 방법, 스트링 조이는지 푸는지 등의 내용</label>
-                    <textarea id="comments" class="form-input h-32" placeholder="요청 사항을 입력하세요..."></textarea>
-                </div>
-            </section>
-            
-            <div class="mt-12 text-center">
-                <button id="save-btn" class="w-full md:w-auto text-lg px-12 py-3 rounded-lg font-bold text-white bg-green-600 hover:bg-green-700 transition-transform transform hover:scale-105">
-                    작업 지시서 저장 및 다운로드
-                </button>
+<body class="bg-gradient-to-br from-purple-50 to-indigo-100 min-h-screen font-noto">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- 헤더 -->
+        <div class="text-center mb-8">
+            <div class="mb-4">
+                <i class="fas fa-camera-retro text-6xl text-indigo-600 mb-4"></i>
             </div>
-        </main>
-    </div>
-
-    <div id="data-summary-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4 text-gray-800">작성된 작업 지시서 내용 (텍스트 요약)</h3>
-            <p class="text-gray-600 mb-4">아래 내용을 복사하여 이메일 등으로 스튜디오에 보내주세요.</p>
-            <textarea id="summary-text-area" class="modal-text-area" readonly></textarea>
-            <div class="mt-6 flex justify-end space-x-4">
-                <button id="copy-summary-btn" class="btn btn-primary">내용 복사하기</button>
-                <button id="close-modal-btn" class="btn btn-secondary">닫기</button>
-            </div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">끈스튜디오</h1>
+            <p class="text-xl text-gray-600 mb-1">AI 피팅 촬영 서비스</p>
+            <p class="text-sm text-gray-500">@kkeunstudio</p>
         </div>
-    </div>
 
-    <!-- Custom Alert Modal -->
-    <div id="custom-alert-modal" class="modal-overlay">
-        <div class="modal-content max-w-sm">
-            <h3 class="text-xl font-bold mb-4 text-gray-800" id="custom-alert-title">알림</h3>
-            <p class="text-gray-700 mb-6" id="custom-alert-message"></p>
-            <div class="flex justify-center">
-                <button id="custom-alert-ok-btn" class="btn btn-primary">확인</button>
+        <!-- 작업지시서 폼 -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-6">
+                <h2 class="text-2xl font-bold text-white flex items-center">
+                    <i class="fas fa-clipboard-list mr-3"></i>
+                    작업지시서
+                </h2>
+                <p class="text-indigo-100 mt-2">원하시는 AI 피팅 촬영을 위해 아래 정보를 입력해 주세요</p>
             </div>
-        </div>
-    </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const productList = document.getElementById('product-list');
-        const addProductBtn = document.getElementById('add-product-btn');
-        const additionalDetailList = document.getElementById('additional-detail-list');
-        const addAdditionalDetailBtn = document.getElementById('add-additional-detail-btn');
-        const saveBtn = document.getElementById('save-btn');
-        const dataSummaryModal = document.getElementById('data-summary-modal');
-        const summaryTextArea = document.getElementById('summary-text-area');
-        const copySummaryBtn = document.getElementById('copy-summary-btn');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-
-        // New custom alert modal elements
-        const customAlertModal = document.getElementById('custom-alert-modal');
-        const customAlertTitle = document.getElementById('custom-alert-title');
-        const customAlertMessage = document.getElementById('custom-alert-message');
-        const customAlertOkBtn = document.getElementById('custom-alert-ok-btn');
-
-        // Function to show custom alert modal
-        function showCustomAlert(message, title = '알림') {
-            customAlertTitle.textContent = title;
-            customAlertMessage.textContent = message;
-            customAlertModal.classList.add('show');
-        }
-
-        // Event listener for custom alert modal's OK button
-        customAlertOkBtn.addEventListener('click', () => {
-            customAlertModal.classList.remove('show');
-        });
-
-        // Basic Info elements
-        const shootDateInput = document.getElementById('shoot-date');
-        const brandNameInput = document.getElementById('brand-name');
-        const shootTypeSelect = document.getElementById('shoot-type');
-        const backgroundColorGroup = document.getElementById('background-color-group');
-        const backgroundColorSelect = document.getElementById('background-color');
-        const imageRatioSelect = document.getElementById('image-ratio');
-        const customRatioGroup = document.getElementById('custom-ratio-group');
-        const customRatioInput = document.getElementById('custom-ratio');
-        const commentsTextarea = document.getElementById('comments');
-
-
-        // Sections to enable/disable
-        const productRequestsSection = document.getElementById('product-requests');
-        const additionalRequestsSection = document.getElementById('additional-requests');
-
-        let productCounter = 0;
-        let additionalDetailCounter = 0;
-
-        const apparelOptions = {
-            fullCuts: {
-                '앞면': 'front',
-                '뒷면': 'back',
-            },
-            detailCuts: {
-                '넥라인': 'neckline', '소매': 'sleeve', '밑단': 'hem', '로고': 'logo', '단추': 'button', 
-                '지퍼': 'zipper', '스트링': 'string', '소재': 'material', '어깨': 'shoulder', '안감': 'lining', 
-                '주머니': 'pocket', '허리': 'waist', '앞주머니': 'frontPocket', '뒷주머니': 'backPocket'
-            }
-        };
-
-        const miscOptions = {
-            fullCuts: {
-                '앞면': 'front', '뒷면': 'back', '옆면': 'side', '측면(45도)': '45degree', '탑뷰': 'topView'
-            },
-            detailCuts: {
-                '버클부분': 'buckle', '손잡이': 'handle', '가방 속 안감': 'bagLining', '가방로고': 'bagLogo'
-            }
-        };
-
-        // Function to set values for form elements on initial load or dynamic update
-        function setFormValue(element, value) {
-            if (element) {
-                if (element.type === 'checkbox') {
-                    element.checked = value;
-                } else if (element.tagName === 'SELECT') {
-                    // Reset all options to not selected first
-                    Array.from(element.options).forEach(option => {
-                        option.selected = false;
-                    });
-                    // Then set the correct option as selected
-                    const optionToSelect = Array.from(element.options).find(option => option.value === value);
-                    if (optionToSelect) {
-                        optionToSelect.selected = true;
-                    } else if (element.id === 'image-ratio' && value && !['2:3', '4:5', '1:1', '3:4', '16:9', 'custom'].includes(value)) {
-                        // Special handling for custom image ratio not directly in predefined options
-                        const customOption = Array.from(element.options).find(o => o.value === 'custom');
-                        if (customOption) customOption.selected = true;
-                    }
-                } else if (element.type !== 'file') {
-                    element.value = value;
-                }
-            }
-        }
-
-        // Function to enable/disable a full section's inputs and buttons
-        function setSectionEnabled(sectionElement, enabled) {
-            if (enabled) {
-                sectionElement.classList.remove('section-disabled');
-                sectionElement.querySelectorAll('input, select, textarea, button').forEach(el => {
-                    el.disabled = false;
-                    el.readOnly = false; // Important for text inputs to be editable
-                    el.style.cursor = '';
-                    if (el.tagName === 'SELECT') el.style.pointerEvents = '';
-                });
-                if (sectionElement.id === 'product-requests') {
-                    addProductBtn.style.display = 'inline-block';
-                }
-                if (sectionElement.id === 'additional-requests') {
-                    addAdditionalDetailBtn.style.display = 'inline-block';
-                }
-            } else {
-                sectionElement.classList.add('section-disabled');
-                sectionElement.querySelectorAll('input, select, textarea, button').forEach(el => {
-                    el.disabled = true;
-                    el.readOnly = true; // Important for text inputs to be non-editable
-                    el.style.cursor = 'not-allowed';
-                    if (el.tagName === 'SELECT') el.style.pointerEvents = 'none';
-                });
-                if (sectionElement.id === 'product-requests') {
-                    addProductBtn.style.display = 'none';
-                    productList.innerHTML = ''; // Clear products when section is disabled
-                    productCounter = 0;
-                }
-                if (sectionElement.id === 'additional-requests') {
-                    addAdditionalDetailBtn.style.display = 'none';
-                    additionalDetailList.innerHTML = ''; // Clear additional details when section is disabled
-                    additionalDetailCounter = 0;
-                }
-            }
-        }
-        
-        function createCheckboxGroup(title, options, idPrefix, currentProduct) {
-            let checkboxesHTML = `<div class="mb-4"><h4 class="font-semibold text-gray-700 mb-2">${title}</h4><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-2">`;
-            for (const [label, value] of Object.entries(options)) {
-                const isChecked = currentProduct && currentProduct.requestedCuts && currentProduct.requestedCuts[value] ? 'checked' : '';
-                checkboxesHTML += `
-                    <label class="checkbox-label">
-                        <input type="checkbox" class="checkbox" data-key="${value}" id="${idPrefix}-${value}" ${isChecked}>
-                        <span>${label}</span>
+            <form id="orderForm" class="p-8 space-y-6">
+                <!-- 브랜드명 -->
+                <div class="form-group">
+                    <label for="brandName" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-tag mr-2 text-indigo-500"></i>브랜드명 *
                     </label>
-                `;
-            }
-            checkboxesHTML += `</div></div>`;
-            return checkboxesHTML;
-        }
-
-        function updateProductShotOptions(productCard, productType, currentProduct = null) {
-            const optionsContainer = productCard.querySelector('.shot-options-container');
-            let content = '';
-
-            if (productType === 'apparel') {
-                content += createCheckboxGroup('전체컷', apparelOptions.fullCuts, `p${productCard.dataset.id}-full`, currentProduct);
-                content += createCheckboxGroup('디테일컷', apparelOptions.detailCuts, `p${productCard.dataset.id}-detail`, currentProduct);
-            } else if (productType === 'misc') {
-                content += createCheckboxGroup('전체컷', miscOptions.fullCuts, `p${productCard.dataset.id}-full`, currentProduct);
-                content += createCheckboxGroup('디테일컷', miscOptions.detailCuts, `p${productCard.dataset.id}-detail`, currentProduct);
-            }
-
-            optionsContainer.innerHTML = content;
-        }
-
-        // Function to handle image preview
-        function setupImagePreview(fileInput, previewImg) {
-            fileInput.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewImg.src = e.target.result;
-                        previewImg.style.display = 'block'; // Show the image
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    previewImg.src = '';
-                    previewImg.style.display = 'none'; // Hide if no file selected
-                }
-            });
-        }
-
-        function createProductCard(initialData = {}) {
-            productCounter++;
-            const card = document.createElement('div');
-            card.className = 'p-6 border border-gray-200 rounded-xl bg-gray-50';
-            card.dataset.id = initialData.id || productCounter;
-
-            card.innerHTML = `
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="product-card-title">제품 ${card.dataset.id}</h3>
-                    <button class="remove-product-btn text-red-500 hover:text-red-700 font-semibold">삭제</button>
+                    <input type="text" id="brandName" name="brandName" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                           placeholder="예: 끈스튜디오">
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                        <label for="p${card.dataset.id}-name" class="form-label">제품명 (컬러)</label>
-                        <input type="text" id="p${card.dataset.id}-name" class="form-input product-name" placeholder="예: 린넨 셔츠 (베이지)" value="${initialData.productName || ''}">
-                    </div>
-                    <div>
-                        <label for="p${card.dataset.id}-type" class="form-label">제품 타입</label>
-                        <select id="p${card.dataset.id}-type" class="form-input product-type">
-                            <option value="apparel" ${initialData.productType === 'apparel' ? 'selected' : ''}>의류</option>
-                            <option value="misc" ${initialData.productType === 'misc' ? 'selected' : ''}>잡화</option>
-                        </select>
-                    </div>
-                    <div class="lg:col-span-2">
-                        <label for="p${card.dataset.id}-img-file" class="form-label">제품 이미지 첨부</label>
-                        <input type="file" id="p${card.dataset.id}-img-file" class="form-input product-image-file" accept="image/*">
-                        <img id="p${card.dataset.id}-img-preview" class="image-preview" src="${initialData.productImageBase64 || ''}" style="${initialData.productImageBase64 ? 'display: block;' : 'display: none;'}" alt="제품 이미지 미리보기">
-                        <p class="text-xs text-gray-500 mt-1">
-                            (참고: 이미지 파일은 브라우저에 임시로만 표시되며, 이 파일을 저장하려면 별도의 서버 업로드가 필요합니다.)
-                        </p>
+
+                <!-- 제작 컨셉 -->
+                <div class="form-group">
+                    <label for="concept" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-lightbulb mr-2 text-indigo-500"></i>제작하고 싶은 컨셉 *
+                    </label>
+                    <textarea id="concept" name="concept" required rows="3"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                              placeholder="예: 캐주얼한 일상룩, 고급스러운 오피스룩, 트렌디한 스트릿패션 등"></textarea>
+                </div>
+
+                <!-- 모델 성별 -->
+                <div class="form-group">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <i class="fas fa-users mr-2 text-indigo-500"></i>모델 성별 *
+                    </label>
+                    <div class="grid grid-cols-3 gap-4">
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors gender-option">
+                            <input type="radio" name="gender" value="여성" class="sr-only">
+                            <div class="flex flex-col items-center w-full">
+                                <i class="fas fa-female text-2xl text-pink-500 mb-2"></i>
+                                <span class="font-medium">여성</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors gender-option">
+                            <input type="radio" name="gender" value="남성" class="sr-only">
+                            <div class="flex flex-col items-center w-full">
+                                <i class="fas fa-male text-2xl text-blue-500 mb-2"></i>
+                                <span class="font-medium">남성</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors gender-option">
+                            <input type="radio" name="gender" value="무관" class="sr-only">
+                            <div class="flex flex-col items-center w-full">
+                                <i class="fas fa-genderless text-2xl text-gray-500 mb-2"></i>
+                                <span class="font-medium">무관</span>
+                            </div>
+                        </label>
                     </div>
                 </div>
-                <div class="mt-6 shot-options-container">
-                    </div>
-                <div class="mt-4">
-                    <label for="p${card.dataset.id}-other" class="form-label">기타 디테일 컷 (직접 기재)</label>
-                    <input type="text" id="p${card.dataset.id}-other" class="form-input product-other-details" placeholder="특별히 요청할 디테일 컷을 기재해주세요." value="${initialData.otherDetails || ''}">
-                </div>
-            `;
 
-            productList.appendChild(card);
-            updateProductShotOptions(card, initialData.productType || 'apparel', initialData); 
-
-            // Setup image preview for this card
-            const fileInput = card.querySelector(`#p${card.dataset.id}-img-file`);
-            const previewImg = card.querySelector(`#p${card.dataset.id}-img-preview`);
-            setupImagePreview(fileInput, previewImg);
-
-            card.querySelector('.product-type').addEventListener('change', (e) => {
-                updateProductShotOptions(card, e.target.value);
-            });
-
-            card.querySelector('.remove-product-btn').addEventListener('click', () => {
-                card.remove();
-            });
-            return card;
-        }
-        
-        function createAdditionalDetailItem(initialData = {}) {
-            additionalDetailCounter++;
-            const item = document.createElement('div');
-            item.className = 'p-4 border border-gray-200 rounded-lg bg-gray-50';
-            item.dataset.id = initialData.id || additionalDetailCounter;
-            
-            item.innerHTML = `
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-semibold text-gray-800">연출컷 ${item.dataset.id}</h3>
-                    <button class="remove-additional-detail-btn text-red-500 hover:text-red-700 font-semibold">삭제</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="ad${item.dataset.id}-name" class="form-label">제품명</label>
-                        <input type="text" id="ad${item.dataset.id}-name" class="form-input additional-product-name" placeholder="해당하는 제품명" value="${initialData.productName || ''}">
-                    </div>
-                    <div>
-                        <label for="ad${item.dataset.id}-img-file" class="form-label">레퍼런스 이미지 첨부</label>
-                        <input type="file" id="ad${item.dataset.id}-img-file" class="form-input additional-image-file" accept="image/*">
-                        <img id="ad${item.dataset.id}-img-preview" class="image-preview" src="${initialData.imageBase64 || ''}" style="${initialData.imageBase64 ? 'display: block;' : 'display: none;'}" alt="레퍼런스 이미지 미리보기">
-                        <p class="text-xs text-gray-500 mt-1">
-                            (참고: 이미지 파일은 브라우저에 임시로만 표시되며, 이 파일을 저장하려면 별도의 서버 업로드가 필요합니다.)
-                        </p>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label for="ad${item.dataset.id}-desc" class="form-label">설명 (연출 방향 및 강조할 부분)</label>
-                        <textarea id="ad${item.dataset.id}-desc" class="form-input h-20 additional-description" placeholder="상세한 설명을 입력하세요." >${initialData.description || ''}</textarea>
+                <!-- 모델 인종 -->
+                <div class="form-group">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <i class="fas fa-globe mr-2 text-indigo-500"></i>모델 인종 *
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors race-option">
+                            <input type="radio" name="race" value="동양인" class="sr-only">
+                            <span class="font-medium text-center w-full">동양인</span>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors race-option">
+                            <input type="radio" name="race" value="백인" class="sr-only">
+                            <span class="font-medium text-center w-full">백인</span>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors race-option">
+                            <input type="radio" name="race" value="흑인" class="sr-only">
+                            <span class="font-medium text-center w-full">흑인</span>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors race-option">
+                            <input type="radio" name="race" value="무관" class="sr-only">
+                            <span class="font-medium text-center w-full">무관</span>
+                        </label>
                     </div>
                 </div>
-            `;
-            additionalDetailList.appendChild(item);
 
-            // Setup image preview for this item
-            const fileInput = item.querySelector(`#ad${item.dataset.id}-img-file`);
-            const previewImg = item.querySelector(`#ad${item.dataset.id}-img-preview`);
-            setupImagePreview(fileInput, previewImg);
+                <!-- 촬영 장소/배경 -->
+                <div class="form-group">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <i class="fas fa-map-marker-alt mr-2 text-indigo-500"></i>촬영 장소/배경
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors location-option">
+                            <input type="checkbox" name="location" value="스튜디오" class="sr-only">
+                            <span class="font-medium text-center w-full">스튜디오</span>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors location-option">
+                            <input type="checkbox" name="location" value="야외" class="sr-only">
+                            <span class="font-medium text-center w-full">야외</span>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors location-option">
+                            <input type="checkbox" name="location" value="카페" class="sr-only">
+                            <span class="font-medium text-center w-full">카페</span>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors location-option">
+                            <input type="checkbox" name="location" value="거리" class="sr-only">
+                            <span class="font-medium text-center w-full">거리</span>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors location-option">
+                            <input type="checkbox" name="location" value="사무실" class="sr-only">
+                            <span class="font-medium text-center w-full">사무실</span>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors location-option">
+                            <input type="checkbox" name="location" value="기타" class="sr-only">
+                            <span class="font-medium text-center w-full">기타</span>
+                        </label>
+                    </div>
+                    <input type="text" id="customLocation" name="customLocation" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors mt-3 hidden"
+                           placeholder="원하시는 장소를 직접 입력해 주세요">
+                </div>
 
-            item.querySelector('.remove-additional-detail-btn').addEventListener('click', () => {
-                item.remove();
-            });
-            return item;
-        }
+                <!-- 상품 사진 업로드 -->
+                <div class="form-group">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-camera mr-2 text-indigo-500"></i>상품 사진 (착용컷 권장) *
+                    </label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-400 transition-colors">
+                        <input type="file" id="productImages" name="productImages" multiple accept="image/*" class="hidden">
+                        <label for="productImages" class="cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600 font-medium mb-2">클릭하여 이미지 업로드</p>
+                            <p class="text-sm text-gray-400">PNG, JPG, JPEG 파일을 선택해 주세요 (최대 10MB)</p>
+                        </label>
+                    </div>
+                    <div id="imagePreview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 hidden"></div>
+                </div>
 
-        addProductBtn.addEventListener('click', () => createProductCard());
-        addAdditionalDetailBtn.addEventListener('click', () => createAdditionalDetailItem());
+                <!-- 연락처 -->
+                <div class="form-group">
+                    <label for="contact" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-phone mr-2 text-indigo-500"></i>연락처 *
+                    </label>
+                    <input type="text" id="contact" name="contact" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                           placeholder="010-0000-0000">
+                </div>
 
-        // Basic Info - Dynamic field logic
-        shootTypeSelect.addEventListener('change', function() {
-            const selectedType = this.value;
+                <!-- 추가 요청사항 -->
+                <div class="form-group">
+                    <label for="additionalRequest" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-comment-dots mr-2 text-indigo-500"></i>추가 요청사항
+                    </label>
+                    <textarea id="additionalRequest" name="additionalRequest" rows="3"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                              placeholder="특별한 포즈나 분위기, 기타 요청사항을 입력해 주세요"></textarea>
+                </div>
 
-            // 배경 색상 필드 활성화/비활성화
-            if (selectedType === 'cut-out' || selectedType === 'ghost') {
-                backgroundColorGroup.style.display = 'block';
-                backgroundColorSelect.disabled = false;
-            } else {
-                backgroundColorGroup.style.display = 'none';
-                backgroundColorSelect.disabled = true;
-                backgroundColorSelect.value = ''; // Reset value when hidden
-            }
+                <!-- 제출 버튼 -->
+                <div class="pt-6">
+                    <button type="submit" 
+                            class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-indigo-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        작업지시서 완료하고 카카오톡으로 전송
+                    </button>
+                </div>
+            </form>
+        </div>
 
-            // '연출컷' 선택 시 1번 섹션 비활성화, 2번 섹션 활성화
-            if (selectedType === 'styled-shoot') {
-                setSectionEnabled(productRequestsSection, false); // Disable section 1
-                setSectionEnabled(additionalRequestsSection, true);  // Enable section 2
-            } 
-            // '자연광', '누끼', '고스트' 선택 시 1번 섹션 활성화, 2번 섹션 비활성화
-            else if (selectedType === 'natural-light' || selectedType === 'cut-out' || selectedType === 'ghost') {
-                setSectionEnabled(productRequestsSection, true);    // Enable section 1
-                setSectionEnabled(additionalRequestsSection, false); // Disable section 2
-            }
-            // 기타 (선택 안 함)
-            else {
-                setSectionEnabled(productRequestsSection, true); // Default to enabled
-                setSectionEnabled(additionalRequestsSection, true); // Default to enabled
-            }
+        <!-- 결과 모달 -->
+        <div id="resultModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center">
+                <i class="fas fa-check-circle text-5xl text-green-500 mb-4"></i>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">작업지시서 완료!</h3>
+                <p class="text-gray-600 mb-6">작업지시서가 성공적으로 저장되었습니다.<br>카카오톡으로 전송해 주세요!</p>
+                <div class="space-y-3">
+                    <button id="sendKakao" 
+                            class="w-full bg-yellow-400 text-gray-800 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-500 transition-colors">
+                        <i class="fab fa-kickstarter mr-2"></i>
+                        카카오톡으로 전송
+                    </button>
+                    <button id="downloadOrder" 
+                            class="w-full bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>
+                        PDF 다운로드
+                    </button>
+                    <button id="closeModal" 
+                            class="w-full bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 푸터 -->
+        <div class="text-center mt-8 text-gray-500">
+            <p class="text-sm">© 2024 끈스튜디오 | AI 피팅 촬영 서비스</p>
+            <p class="text-xs mt-1">카카오톡 채널: @kkeunstudio</p>
+            <div class="mt-4">
+                <a href="admin.html" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-cog mr-1"></i>관리자 페이지
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let orderData = {};
+        let uploadedImages = [];
+
+        // DOM 로드 완료 시 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
         });
 
-        imageRatioSelect.addEventListener('change', function() {
-            if (this.value === 'custom') {
-                customRatioGroup.style.display = 'block';
-                customRatioInput.disabled = false;
-            } else {
-                customRatioGroup.style.display = 'none';
-                customRatioInput.disabled = true;
-                customRatioInput.value = ''; // Reset value when hidden
-            }
-        });
-
-
-        // Function to collect all form data (including base64 for images if available)
-        async function collectFormData() {
-            const data = {
-                basicInfo: {
-                    shootDate: shootDateInput.value,
-                    brandName: brandNameInput.value,
-                    shootType: shootTypeSelect.value,
-                    backgroundColor: (shootTypeSelect.value === 'cut-out' || shootTypeSelect.value === 'ghost') ? backgroundColorSelect.value : '',
-                    imageRatio: imageRatioSelect.value === 'custom' ? customRatioInput.value : imageRatioSelect.value,
-                },
-                products: [],
-                additionalDetails: [],
-                comments: commentsTextarea.value
-            };
-
-            // Only collect product data if section 1 is enabled
-            if (!productRequestsSection.classList.contains('section-disabled')) {
-                const productCards = document.querySelectorAll('#product-list > div');
-                for (const card of productCards) {
-                    const fileInput = card.querySelector('.product-image-file');
-                    let productImageBase64 = '';
-                    if (fileInput && fileInput.files && fileInput.files[0]) {
-                        productImageBase64 = await new Promise(resolve => {
-                            const reader = new FileReader();
-                            reader.onload = e => resolve(e.target.result);
-                            reader.readAsDataURL(fileInput.files[0]);
-                        });
-                    } else {
-                        const previewImg = card.querySelector('.image-preview');
-                        if (previewImg && previewImg.src && previewImg.src.startsWith('data:image')) {
-                            productImageBase64 = previewImg.src;
-                        }
-                    }
-
-                    const product = {
-                        id: card.dataset.id,
-                        productName: card.querySelector('.product-name').value,
-                        productType: card.querySelector('.product-type').value,
-                        productImageBase64: productImageBase64,
-                        otherDetails: card.querySelector('.product-other-details').value,
-                        requestedCuts: {}
-                    };
-                    card.querySelectorAll('.checkbox:checked').forEach(checkbox => {
-                        product.requestedCuts[checkbox.dataset.key] = true;
-                    });
-                    data.products.push(product);
-                }
-            } else {
-                data.products = []; // If section is disabled, ensure no product data is saved
-            }
-            
-            // Only collect additional details if section 2 is enabled
-            if (!additionalRequestsSection.classList.contains('section-disabled')) {
-                const additionalDetailItems = document.querySelectorAll('#additional-detail-list > div');
-                for (const item of additionalDetailItems) {
-                    const fileInput = item.querySelector('.additional-image-file');
-                    let imageBase64 = '';
-                    if (fileInput && fileInput.files && fileInput.files[0]) {
-                        imageBase64 = await new Promise(resolve => {
-                            const reader = new FileReader();
-                            reader.onload = e => resolve(e.target.result);
-                            reader.readAsDataURL(fileInput.files[0]);
-                        });
-                    } else {
-                        const previewImg = item.querySelector('.image-preview');
-                        if (previewImg && previewImg.src && previewImg.src.startsWith('data:image')) {
-                            imageBase64 = previewImg.src;
-                        }
-                    }
-
-                    const detail = {
-                        id: item.dataset.id,
-                        productName: item.querySelector('.additional-product-name').value,
-                        imageBase64: imageBase64,
-                        description: item.querySelector('.additional-description').value,
-                    };
-                    data.additionalDetails.push(detail);
-                }
-            } else {
-                data.additionalDetails = []; // If section is disabled, ensure no additional detail data is saved
-            }
-            return data;
+        // 앱 초기화
+        function initializeApp() {
+            setupEventListeners();
+            setupFormValidation();
+            setupImageUpload();
+            setupCustomOptions();
         }
 
-        // Function to populate form with data (on initial load or if data is explicitly passed)
-        function populateForm(data) {
-            setFormValue(shootDateInput, data.basicInfo.shootDate);
-            setFormValue(brandNameInput, data.basicInfo.brandName);
-            setFormValue(commentsTextarea, data.comments);
-
-            // Populate Shoot Type
-            const shootTypeOptions = [
-                {value: "", text: "선택하세요"}, {value: "natural-light", text: "자연광"},
-                {value: "cut-out", text: "누끼"}, {value: "ghost", text: "고스트"},
-                {value: "styled-shoot", text: "연출컷"}
-            ];
-            shootTypeSelect.innerHTML = '';
-            shootTypeOptions.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt.value;
-                option.textContent = opt.text;
-                if (opt.value === data.basicInfo.shootType) option.selected = true;
-                shootTypeSelect.appendChild(option);
-            });
-            // Trigger change event AFTER setting the value to apply UI logic
-            shootTypeSelect.dispatchEvent(new Event('change')); 
-
-            // Populate Background Color
-            const backgroundColorOptions = [
-                {value: "", text: "선택하세요"}, {value: "white", text: "화이트"},
-                {value: "black", text: "블랙"}, {value: "red", text: "레드"},
-                {value: "blue", text: "블루"}, {value: "gray", text: "그레이"}
-            ];
-            backgroundColorSelect.innerHTML = '';
-            backgroundColorOptions.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt.value;
-                option.textContent = opt.text;
-                if (opt.value === data.basicInfo.backgroundColor) option.selected = true;
-                backgroundColorSelect.appendChild(option);
-            });
-
-            // Populate Image Ratio
-            const imageRatioOptions = [
-                {value: "", text: "선택하세요"}, {value: "2:3", text: "2:3 (세로형)"},
-                {value: "4:5", text: "4:5 (세로형)"}, {value: "1:1", text: "1:1 (정사각형)"},
-                {value: "3:4", text: "3:4 (세로형)"}, {value: "16:9", text: "16:9 (가로형)"},
-                {value: "custom", text: "직접 입력"}
-            ];
-            imageRatioSelect.innerHTML = '';
-            imageRatioOptions.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt.value;
-                option.textContent = opt.text;
-                if (opt.value === data.basicInfo.imageRatio) option.selected = true; // Set selected for exact match
-                imageRatioSelect.appendChild(option);
-            });
-
-            const predefinedRatios = ['2:3', '4:5', '1:1', '3:4', '16:9', 'custom'];
-            if (data.basicInfo.imageRatio && !predefinedRatios.includes(data.basicInfo.imageRatio)) {
-                // If it's a custom value not in the list, set select to 'custom' and put value in custom input
-                setFormValue(imageRatioSelect, 'custom');
-                setFormValue(customRatioInput, data.basicInfo.imageRatio);
-                customRatioGroup.style.display = 'block';
-                customRatioInput.disabled = false;
-            } else {
-                setFormValue(imageRatioSelect, data.basicInfo.imageRatio);
-                setFormValue(customRatioInput, '');
-                customRatioGroup.style.display = 'none';
-                customRatioInput.disabled = true;
-            }
-            imageRatioSelect.dispatchEvent(new Event('change')); // Trigger change to apply UI logic
-
-            productList.innerHTML = '';
-            additionalDetailList.innerHTML = '';
-            productCounter = 0;
-            additionalDetailCounter = 0;
-
-            // Only populate if the section is meant to be active for the current shootType
-            if (!productRequestsSection.classList.contains('section-disabled')) {
-                data.products.forEach(productData => {
-                    createProductCard(productData);
-                });
-                data.products.forEach(productData => {
-                    const productCard = document.querySelector(`[data-id="${productData.id}"]`);
-                    if (productCard && productData.requestedCuts) {
-                        for (const key in productData.requestedCuts) {
-                            const checkbox = productCard.querySelector(`.checkbox[data-key="${key}"]`);
-                            if (checkbox) {
-                                checkbox.checked = productData.requestedCuts[key];
-                            }
-                        }
-                    }
-                });
-            }
-
-            if (!additionalRequestsSection.classList.contains('section-disabled')) {
-                data.additionalDetails.forEach(detailData => {
-                    createAdditionalDetailItem(detailData);
-                });
-            }
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // 폼 제출
+            document.getElementById('orderForm').addEventListener('submit', handleFormSubmit);
+            
+            // 모달 관련
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('sendKakao').addEventListener('click', sendToKakao);
+            document.getElementById('downloadOrder').addEventListener('click', downloadPDF);
+            
+            // 라디오 버튼 및 체크박스 스타일링
+            setupOptionSelections();
         }
 
-        // Function to generate the new HTML content with pre-filled data for saving
-        function generateFilledHtml(formData) {
-            const parser = new DOMParser();
-            const tempDoc = parser.parseFromString(document.documentElement.outerHTML, 'text/html');
-
-            // Remove all scripts except the tailwindcss CDN script
-            tempDoc.querySelectorAll('script').forEach(script => {
-                if (!script.src.includes('tailwindcss.com')) {
-                    script.remove();
-                }
+        // 옵션 선택 스타일링 설정
+        function setupOptionSelections() {
+            // 성별 선택
+            document.querySelectorAll('input[name="gender"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    document.querySelectorAll('.gender-option').forEach(option => {
+                        option.classList.remove('selected', 'border-indigo-500', 'bg-indigo-50');
+                    });
+                    if (this.checked) {
+                        this.closest('.gender-option').classList.add('selected', 'border-indigo-500', 'bg-indigo-50');
+                    }
+                });
             });
+            
+            // 인종 선택
+            document.querySelectorAll('input[name="race"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    document.querySelectorAll('.race-option').forEach(option => {
+                        option.classList.remove('selected', 'border-indigo-500', 'bg-indigo-50');
+                    });
+                    if (this.checked) {
+                        this.closest('.race-option').classList.add('selected', 'border-indigo-500', 'bg-indigo-50');
+                    }
+                });
+            });
+            
+            // 장소 선택 (다중 선택)
+            document.querySelectorAll('input[name="location"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const option = this.closest('.location-option');
+                    if (this.checked) {
+                        option.classList.add('selected', 'border-indigo-500', 'bg-indigo-50');
+                        // "기타" 선택 시 입력 필드 표시
+                        if (this.value === '기타') {
+                            document.getElementById('customLocation').classList.remove('hidden');
+                        }
+                    } else {
+                        option.classList.remove('selected', 'border-indigo-500', 'bg-indigo-50');
+                        // "기타" 해제 시 입력 필드 숨김
+                        if (this.value === '기타') {
+                            document.getElementById('customLocation').classList.add('hidden');
+                            document.getElementById('customLocation').value = '';
+                        }
+                    }
+                });
+            });
+        }
 
-            // Update title tag
-            const titleTag = tempDoc.querySelector('title');
-            if (titleTag) {
-                titleTag.textContent = '작업 지시서';
-            }
+        // 커스텀 옵션 설정
+        function setupCustomOptions() {
+            // 기타 장소 입력 필드 처리는 위에서 이미 구현됨
+        }
 
-            // Update h1 header text
-            const h1Header = tempDoc.querySelector('h1');
-            if (h1Header) {
-                h1Header.textContent = '작업 지시서';
-            }
+        // 이미지 업로드 설정
+        function setupImageUpload() {
+            const fileInput = document.getElementById('productImages');
+            const preview = document.getElementById('imagePreview');
+            
+            fileInput.addEventListener('change', function(e) {
+                handleImageUpload(e.target.files);
+            });
+            
+            // 드래그 앤 드롭 기능
+            const uploadArea = fileInput.parentElement;
+            
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('border-indigo-400', 'bg-indigo-50');
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('border-indigo-400', 'bg-indigo-50');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('border-indigo-400', 'bg-indigo-50');
+                handleImageUpload(e.dataTransfer.files);
+            });
+        }
 
-            // Set basic info input/textarea values and ensure they are set as attributes
-            const savedShootDateInput = tempDoc.getElementById('shoot-date');
-            if (savedShootDateInput) {
-                savedShootDateInput.value = formData.basicInfo.shootDate;
-                savedShootDateInput.setAttribute('value', formData.basicInfo.shootDate);
-                savedShootDateInput.disabled = true; // Disable in saved output
-                savedShootDateInput.readOnly = true;
-            }
-
-            const savedBrandNameInput = tempDoc.getElementById('brand-name');
-            if (savedBrandNameInput) {
-                savedBrandNameInput.value = formData.basicInfo.brandName;
-                savedBrandNameInput.setAttribute('value', formData.basicInfo.brandName);
-                savedBrandNameInput.disabled = true; // Disable in saved output
-                savedBrandNameInput.readOnly = true;
-            }
-
-            const savedCommentsTextarea = tempDoc.getElementById('comments');
-            if (savedCommentsTextarea) {
-                savedCommentsTextarea.textContent = formData.comments;
-                savedCommentsTextarea.disabled = true; // Disable in saved output
-                savedCommentsTextarea.readOnly = true;
+        // 이미지 업로드 처리
+        function handleImageUpload(files) {
+            const preview = document.getElementById('imagePreview');
+            const maxFiles = 10;
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            
+            // 파일 수 제한
+            if (uploadedImages.length + files.length > maxFiles) {
+                alert(`최대 ${maxFiles}개의 이미지만 업로드할 수 있습니다.`);
+                return;
             }
             
-            // Handle shoot type select in the saved document
-            const tempShootTypeSelect = tempDoc.getElementById('shoot-type');
-            if (tempShootTypeSelect) {
-                tempShootTypeSelect.innerHTML = ''; // Clear existing options
-                const shootTypeOptions = [
-                    {value: "", text: "선택하세요"}, {value: "natural-light", text: "자연광"},
-                    {value: "cut-out", text: "누끼"}, {value: "ghost", text: "고스트"},
-                    {value: "styled-shoot", text: "연출컷"}
-                ];
-                shootTypeOptions.forEach(opt => {
-                    const option = tempDoc.createElement('option');
-                    option.value = opt.value;
-                    option.textContent = opt.text;
-                    if (opt.value === formData.basicInfo.shootType) {
-                        option.selected = true; // Set selected for JS DOM
-                        option.setAttribute('selected', 'selected'); // Set attribute for HTML persistence
-                    }
-                    tempShootTypeSelect.appendChild(option);
-                });
-                tempShootTypeSelect.disabled = true; // Disable in saved output
-                tempShootTypeSelect.setAttribute('disabled', 'disabled');
-            }
-
-            // Handle background color group in the saved document
-            const tempBackgroundColorGroup = tempDoc.getElementById('background-color-group');
-            const tempBackgroundColorSelect = tempDoc.getElementById('background-color');
-            if (tempBackgroundColorGroup && tempBackgroundColorSelect) {
-                if (formData.basicInfo.shootType === 'cut-out' || formData.basicInfo.shootType === 'ghost') {
-                    tempBackgroundColorGroup.style.display = 'block';
-                    tempBackgroundColorSelect.innerHTML = '';
-                    const backgroundColorOptions = [
-                        {value: "", text: "선택하세요"}, {value: "white", text: "화이트"},
-                        {value: "black", text: "블랙"}, {value: "red", text: "레드"},
-                        {value: "blue", text: "블루"}, {value: "gray", text: "그레이"}
-                    ];
-                    backgroundColorOptions.forEach(opt => {
-                        const option = tempDoc.createElement('option');
-                        option.value = opt.value;
-                        option.textContent = opt.text;
-                        if (opt.value === formData.basicInfo.backgroundColor) {
-                            option.selected = true; // Set selected for JS DOM
-                            option.setAttribute('selected', 'selected'); // Set attribute for HTML persistence
-                        }
-                        tempBackgroundColorSelect.appendChild(option);
-                    });
-                    tempBackgroundColorSelect.disabled = true;
-                    tempBackgroundColorSelect.setAttribute('disabled', 'disabled');
-                } else {
-                    tempBackgroundColorGroup.remove(); // Remove if not needed for the shoot type
+            Array.from(files).forEach(file => {
+                // 파일 크기 제한
+                if (file.size > maxSize) {
+                    alert(`${file.name} 파일이 너무 큽니다. 10MB 이하의 파일을 선택해 주세요.`);
+                    return;
                 }
-            }
-
-            // Handle image ratio select and custom input in the saved document
-            const tempImageRatioSelect = tempDoc.getElementById('image-ratio');
-            const tempCustomRatioGroup = tempDoc.getElementById('custom-ratio-group');
-            const tempCustomRatioInput = tempDoc.getElementById('custom-ratio');
-
-            if (tempImageRatioSelect) {
-                const imageRatioValue = formData.basicInfo.imageRatio;
-                const predefinedRatios = ['2:3', '4:5', '1:1', '3:4', '16:9', 'custom'];
                 
-                tempImageRatioSelect.innerHTML = '';
-                const imageRatioOptions = [
-                    {value: "", text: "선택하세요"}, {value: "2:3", text: "2:3 (세로형)"},
-                    {value: "4:5", text: "4:5 (세로형)"}, {value: "1:1", text: "1:1 (정사각형)"},
-                    {value: "3:4", text: "3:4 (세로형)"}, {value: "16:9", text: "16:9 (가로형)"},
-                    {value: "custom", text: "직접 입력"}
-                ];
-                imageRatioOptions.forEach(opt => {
-                    const option = tempDoc.createElement('option');
-                    option.value = opt.value;
-                    option.textContent = opt.text;
-                    // Check if this option should be selected
-                    if (opt.value === imageRatioValue || (opt.value === 'custom' && imageRatioValue && !predefinedRatios.includes(imageRatioValue))) {
-                        option.selected = true;
-                        option.setAttribute('selected', 'selected'); // Set attribute for HTML persistence
-                    }
-                    tempImageRatioSelect.appendChild(option);
-                });
-
-                if (imageRatioValue && !predefinedRatios.includes(imageRatioValue)) {
-                    // This is a custom value like "3:2"
-                    if (tempCustomRatioGroup && tempCustomRatioInput) {
-                        tempCustomRatioGroup.style.display = 'block';
-                        tempCustomRatioInput.value = imageRatioValue;
-                        tempCustomRatioInput.setAttribute('value', imageRatioValue); // Set value attribute
-                        tempCustomRatioInput.disabled = true;
-                        tempCustomRatioInput.setAttribute('disabled', 'disabled'); // Ensure disabled attribute is set
-                        tempCustomRatioInput.setAttribute('readonly', 'readonly'); // Ensure readonly attribute is set
-                    }
-                } else if (imageRatioValue === 'custom') {
-                    // The user selected "직접 입력" but might not have typed anything
-                    if (tempCustomRatioGroup && tempCustomRatioInput) {
-                        tempCustomRatioGroup.style.display = 'block';
-                        // Keep value empty if only 'custom' was selected without an actual input
-                        tempCustomRatioInput.value = '';
-                        tempCustomRatioInput.setAttribute('value', ''); // Set value attribute
-                        tempCustomRatioInput.disabled = true;
-                        tempCustomRatioInput.setAttribute('disabled', 'disabled'); // Ensure disabled attribute is set
-                        tempCustomRatioInput.setAttribute('readonly', 'readonly'); // Ensure readonly attribute is set
-                    }
-                } else {
-                    // Predefined ratio, hide custom input
-                    if (tempCustomRatioGroup) tempCustomRatioGroup.remove();
+                // 이미지 파일 타입 검사
+                if (!file.type.startsWith('image/')) {
+                    alert(`${file.name}은(는) 이미지 파일이 아닙니다.`);
+                    return;
                 }
-                tempImageRatioSelect.disabled = true;
-                tempImageRatioSelect.setAttribute('disabled', 'disabled'); // Ensure disabled attribute is set
-            }
-
-            // Handle Section 1 disabling/enabling for saved HTML
-            const tempProductRequestsSection = tempDoc.getElementById('product-requests');
-            const tempProductList = tempDoc.getElementById('product-list');
-            const tempAddProductBtn = tempDoc.getElementById('add-product-btn'); // Get this button too
-            
-            if (tempProductRequestsSection && tempProductList) {
-                if (formData.basicInfo.shootType === 'styled-shoot') {
-                    tempProductRequestsSection.classList.add('section-disabled');
-                    tempProductList.innerHTML = ''; // Clear content if disabled
-                    if (tempAddProductBtn) tempAddProductBtn.remove(); // Remove button if disabled
-                } else { // For natural-light, cut-out, ghost, or no selection
-                    tempProductRequestsSection.classList.remove('section-disabled');
-                    // Only populate products if the section was active and had data
-                    if (formData.products && formData.products.length > 0) {
-                        tempProductList.innerHTML = '';
-                        formData.products.forEach(productData => {
-                            const card = tempDoc.createElement('div');
-                            card.className = 'p-6 border border-gray-200 rounded-xl bg-gray-50';
-                            card.dataset.id = productData.id;
-
-                            let productPreviewHtml = '';
-                            if (productData.productImageBase64) {
-                                productPreviewHtml = `<img src="${productData.productImageBase64}" class="image-preview" alt="제품 이미지 미리보기" style="display: block;">`;
-                            }
-
-                            let shotOptionsContent = '';
-                            let currentProductTypeOptions = productData.productType === 'apparel' ? apparelOptions : miscOptions;
-
-                            if (productData.productType === 'apparel' || productData.productType === 'misc') {
-                                shotOptionsContent += `<div class="mb-4"><h4 class="font-semibold text-gray-700 mb-2">전체컷</h4><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-2">`;
-                                for (const [label, value] of Object.entries(currentProductTypeOptions.fullCuts)) {
-                                    const isChecked = productData.requestedCuts && productData.requestedCuts[value] ? 'checked' : '';
-                                    shotOptionsContent += `
-                                        <label class="checkbox-label">
-                                            <input type="checkbox" class="checkbox" data-key="${value}" ${isChecked} disabled ${isChecked ? 'checked' : ''}>
-                                            <span>${label}</span>
-                                        </label>
-                                    `;
-                                }
-                                shotOptionsContent += `</div></div>`;
-
-                                shotOptionsContent += `<div class="mb-4"><h4 class="font-semibold text-gray-700 mb-2">디테일컷</h4><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-2">`;
-                                for (const [label, value] of Object.entries(currentProductTypeOptions.detailCuts)) {
-                                    const isChecked = productData.requestedCuts && productData.requestedCuts[value] ? 'checked' : '';
-                                    shotOptionsContent += `
-                                        <label class="checkbox-label">
-                                            <input type="checkbox" class="checkbox" data-key="${value}" ${isChecked} disabled ${isChecked ? 'checked' : ''}>
-                                            <span>${label}</span>
-                                        </label>
-                                    `;
-                                }
-                                shotOptionsContent += `</div></div>`;
-                            }
-
-                            card.innerHTML = `
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="product-card-title">제품 ${productData.id}</h3>
-                                    </div>
-                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div>
-                                        <label for="p${productData.id}-name" class="form-label">제품명 (컬러)</label>
-                                        <input type="text" id="p${productData.id}-name" class="form-input product-name" value="${productData.productName || ''}" readonly disabled>
-                                    </div>
-                                    <div>
-                                        <label for="p${productData.id}-type" class="form-label">제품 타입</label>
-                                        <select id="p${productData.id}-type" class="form-input product-type" disabled>
-                                            <option value="apparel" ${productData.productType === 'apparel' ? 'selected' : ''} ${productData.productType === 'apparel' ? 'selected' : ''}>의류</option>
-                                            <option value="misc" ${productData.productType === 'misc' ? 'selected' : ''} ${productData.productType === 'misc' ? 'selected' : ''}>잡화</option>
-                                        </select>
-                                    </div>
-                                    <div class="lg:col-span-2">
-                                        <label for="p${productData.id}-img-file" class="form-label">제품 이미지 첨부</label>
-                                        <input type="file" id="p${productData.id}-img-file" class="form-input product-image-file" accept="image/*" disabled readonly>
-                                        ${productPreviewHtml}
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            (참고: 이미지 파일은 브라우저에 임시로만 표시되며, 이 파일을 저장하려면 별도의 서버 업로드가 필요합니다.)
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="mt-6 shot-options-container">
-                                    ${shotOptionsContent}
-                                </div>
-                                <div class="mt-4">
-                                    <label for="p${productData.id}-other" class="form-label">기타 디테일 컷 (직접 기재)</label>
-                                    <input type="text" id="p${productData.id}-other" class="form-input product-other-details" value="${productData.otherDetails || ''}" readonly disabled>
-                                </div>
-                            `;
-                            tempProductList.appendChild(card);
-                        });
-                    }
-                    if (tempAddProductBtn) tempAddProductBtn.remove(); // Remove button in saved HTML as it's a static record
-                }
-            }
-
-            // Handle Section 2 disabling/enabling for saved HTML
-            const tempAdditionalRequestsSection = tempDoc.getElementById('additional-requests');
-            const newAdditionalDetailList = tempDoc.getElementById('additional-detail-list');
-            const tempAddAdditionalDetailBtn = tempDoc.getElementById('add-additional-detail-btn');
-
-            if (tempAdditionalRequestsSection && newAdditionalDetailList) {
-                if (formData.basicInfo.shootType === 'styled-shoot') {
-                    tempAdditionalRequestsSection.classList.remove('section-disabled');
-                    // Only populate additional details if the section was active and had data
-                    if (formData.additionalDetails && formData.additionalDetails.length > 0) {
-                        newAdditionalDetailList.innerHTML = '';
-                        formData.additionalDetails.forEach(detailData => {
-                            const item = tempDoc.createElement('div');
-                            item.className = 'p-4 border border-gray-200 rounded-lg bg-gray-50';
-                            item.dataset.id = detailData.id;
-
-                            let additionalPreviewHtml = '';
-                            if (detailData.imageBase64) {
-                                additionalPreviewHtml = `<img src="${detailData.imageBase64}" class="image-preview" alt="레퍼런스 이미지 미리보기" style="display: block;">`;
-                            }
-
-                            item.innerHTML = `
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="font-semibold text-gray-800">연출컷 ${detailData.id}</h3>
-                                    </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label for="ad${detailData.id}-name" class="form-label">제품명</label>
-                                        <input type="text" id="ad${detailData.id}-name" class="form-input additional-product-name" value="${detailData.productName || ''}" readonly disabled>
-                                    </div>
-                                    <div>
-                                        <label for="ad${detailData.id}-img-file" class="form-label">레퍼런스 이미지 첨부</label>
-                                        <input type="file" id="ad${detailData.id}-img-file" class="form-input additional-image-file" accept="image/*" disabled readonly>
-                                        ${additionalPreviewHtml}
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            (참고: 이미지 파일은 브라우저에 임시로만 표시되며, 이 파일을 저장하려면 별도의 서버 업로드가 필요합니다.)
-                                        </p>
-                                    </div>
-                                    <div class="md:col-span-2">
-                                        <label for="ad${detailData.id}-desc" class="form-label">설명 (연출 방향 및 강조할 부분)</label>
-                                        <textarea id="ad${detailData.id}-desc" class="form-input h-20 additional-description" readonly disabled>${detailData.description || ''}</textarea>
-                                    </div>
-                                </div>
-                            `;
-                            newAdditionalDetailList.appendChild(item);
-                        });
-                    }
-                    if (tempAddAdditionalDetailBtn) tempAddAdditionalDetailBtn.remove(); // Remove button in saved HTML
-                } else { // For natural-light, cut-out, ghost, or no selection
-                    tempAdditionalRequestsSection.classList.add('section-disabled');
-                    newAdditionalDetailList.innerHTML = ''; // Clear content if disabled
-                    if (tempAddAdditionalDetailBtn) tempAddAdditionalDetailBtn.remove(); // Remove button if disabled
-                }
-            }
-
-
-            // Remove action buttons and modal overlay in the saved file
-            // These might have been handled by section-specific logic, but ensure they are gone.
-            const saveBtnElem = tempDoc.getElementById('save-btn');
-            if (saveBtnElem) saveBtnElem.remove();
-            const modalOverlayElem = tempDoc.getElementById('data-summary-modal');
-            if (modalOverlayElem) modalOverlayElem.remove();
-
-            // Disable all remaining form elements for a read-only view in the saved HTML
-            tempDoc.querySelectorAll('.form-input, .checkbox, .product-type, .remove-product-btn, .remove-additional-detail-btn, .product-image-file, .additional-image-file').forEach(element => {
-                element.readOnly = true;
-                element.disabled = true;
-                element.style.cursor = 'default';
-                element.classList.remove('hover:bg-green-700', 'hover:scale-105', 'hover:bg-blue-700', 'hover:bg-gray-700', 'hover:text-red-700');
-                if (element.tagName === 'SELECT') {
-                    element.style.pointerEvents = 'none';
-                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageData = {
+                        file: file,
+                        url: e.target.result,
+                        name: file.name
+                    };
+                    
+                    uploadedImages.push(imageData);
+                    addImagePreview(imageData, uploadedImages.length - 1);
+                    
+                    // 미리보기 영역 표시
+                    preview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
             });
-
-            return `<!DOCTYPE html>\n${tempDoc.documentElement.outerHTML}`;
         }
 
-        saveBtn.addEventListener('click', async () => {
-            const data = await collectFormData();
-            // Changed filename from FRAME_STUDIO_작업지시서 to STUDIO_작업지시서
-            const fileName = `STUDIO_작업지시서_${data.basicInfo.brandName || '미정'}_${data.basicInfo.shootDate || '미정'}.html`;
+        // 이미지 미리보기 추가
+        function addImagePreview(imageData, index) {
+            const preview = document.getElementById('imagePreview');
+            const div = document.createElement('div');
+            div.className = 'image-preview-item relative';
+            div.innerHTML = `
+                <img src="${imageData.url}" alt="${imageData.name}" class="w-full h-24 object-cover rounded-lg">
+                <button type="button" class="remove-btn" onclick="removeImage(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+                <p class="text-xs text-gray-500 mt-1 truncate">${imageData.name}</p>
+            `;
+            preview.appendChild(div);
+        }
+
+        // 이미지 제거
+        function removeImage(index) {
+            uploadedImages.splice(index, 1);
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
             
-            const fullHtmlContent = generateFilledHtml(data);
+            // 다시 렌더링
+            uploadedImages.forEach((imageData, i) => {
+                addImagePreview(imageData, i);
+            });
             
-            const blob = new Blob([fullHtmlContent], { type: 'text/html;charset=utf-8' });
+            // 이미지가 없으면 미리보기 영역 숨김
+            if (uploadedImages.length === 0) {
+                preview.classList.add('hidden');
+            }
+        }
+
+        // 폼 유효성 검사 설정
+        function setupFormValidation() {
+            const form = document.getElementById('orderForm');
+            const inputs = form.querySelectorAll('input[required], textarea[required]');
+            
+            inputs.forEach(input => {
+                input.addEventListener('blur', validateField);
+                input.addEventListener('input', clearFieldError);
+            });
+        }
+
+        // 필드 유효성 검사
+        function validateField(e) {
+            const field = e.target;
+            const value = field.value.trim();
+            
+            // 기존 에러 메시지 제거
+            clearFieldError(e);
+            
+            if (!value) {
+                showFieldError(field, '이 필드는 필수입니다.');
+                return false;
+            }
+            
+            // 연락처 형식 검사
+            if (field.name === 'contact') {
+                const phoneRegex = /^010-\d{4}-\d{4}$/;
+                if (!phoneRegex.test(value)) {
+                    showFieldError(field, '010-0000-0000 형식으로 입력해 주세요.');
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // 필드 에러 표시
+        function showFieldError(field, message) {
+            field.classList.add('border-red-500');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'text-red-500 text-sm mt-1 error-message';
+            errorDiv.textContent = message;
+            
+            field.parentElement.appendChild(errorDiv);
+        }
+
+        // 필드 에러 제거
+        function clearFieldError(e) {
+            const field = e.target;
+            field.classList.remove('border-red-500');
+            
+            const errorMessage = field.parentElement.querySelector('.error-message');
+            if (errorMessage) {
+                errorMessage.remove();
+            }
+        }
+
+        // 폼 제출 처리
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            // 로딩 표시
+            showLoading();
+            
+            // 폼 데이터 수집
+            collectFormData();
+            
+            try {
+                // 시뮬레이션된 저장 처리
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                hideLoading();
+                showResultModal();
+            } catch (error) {
+                console.error('데이터 저장 오류:', error);
+                hideLoading();
+                alert('데이터 저장 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            }
+        }
+
+        // 전체 폼 유효성 검사
+        function validateForm() {
+            const form = document.getElementById('orderForm');
+            let isValid = true;
+            
+            // 필수 필드 검사
+            const requiredFields = form.querySelectorAll('input[required], textarea[required]');
+            requiredFields.forEach(field => {
+                if (!validateField({ target: field })) {
+                    isValid = false;
+                }
+            });
+            
+            // 성별 선택 검사
+            const genderSelected = form.querySelector('input[name="gender"]:checked');
+            if (!genderSelected) {
+                alert('모델 성별을 선택해 주세요.');
+                isValid = false;
+            }
+            
+            // 인종 선택 검사
+            const raceSelected = form.querySelector('input[name="race"]:checked');
+            if (!raceSelected) {
+                alert('모델 인종을 선택해 주세요.');
+                isValid = false;
+            }
+            
+            // 이미지 업로드 검사
+            if (uploadedImages.length === 0) {
+                alert('상품 사진을 최소 1장 업로드해 주세요.');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+
+        // 폼 데이터 수집
+        function collectFormData() {
+            const form = document.getElementById('orderForm');
+            const formData = new FormData(form);
+            
+            orderData = {
+                brandName: formData.get('brandName'),
+                concept: formData.get('concept'),
+                gender: formData.get('gender'),
+                race: formData.get('race'),
+                locations: getSelectedLocations(),
+                customLocation: formData.get('customLocation'),
+                contact: formData.get('contact'),
+                additionalRequest: formData.get('additionalRequest'),
+                images: uploadedImages,
+                timestamp: new Date().toLocaleString('ko-KR')
+            };
+        }
+
+        // 선택된 장소 가져오기
+        function getSelectedLocations() {
+            const locations = [];
+            document.querySelectorAll('input[name="location"]:checked').forEach(input => {
+                locations.push(input.value);
+            });
+            return locations;
+        }
+
+        // 로딩 표시
+        function showLoading() {
+            const button = document.querySelector('button[type="submit"]');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+            button.disabled = true;
+            button.dataset.originalText = originalText;
+        }
+
+        // 로딩 숨김
+        function hideLoading() {
+            const button = document.querySelector('button[type="submit"]');
+            button.innerHTML = button.dataset.originalText;
+            button.disabled = false;
+        }
+
+        // 결과 모달 표시
+        function showResultModal() {
+            const modal = document.getElementById('resultModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex', 'modal-enter');
+            
+            // 체크 아이콘 애니메이션
+            setTimeout(() => {
+                const checkIcon = modal.querySelector('.fa-check-circle');
+                checkIcon.classList.add('check-animation');
+            }, 100);
+        }
+
+        // 모달 닫기
+        function closeModal() {
+            const modal = document.getElementById('resultModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex', 'modal-enter');
+        }
+
+        // 카카오톡으로 전송
+        function sendToKakao() {
+            const orderSummary = generateOrderSummary();
+            const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n${orderSummary}\n\n작업 문의: @kkeunstudio`;
+            
+            // 카카오톡 공유 (실제 환경에서는 카카오톡 SDK 사용)
+            if (navigator.share) {
+                navigator.share({
+                    title: '끈스튜디오 작업지시서',
+                    text: message
+                }).then(() => {
+                    console.log('카카오톡 공유 성공');
+                }).catch(() => {
+                    // 공유 실패 시 클립보드에 복사
+                    copyToClipboard(message);
+                });
+            } else {
+                // 클립보드에 복사
+                copyToClipboard(message);
+            }
+        }
+
+        // 클립보드에 복사
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('작업지시서 내용이 클립보드에 복사되었습니다.\n카카오톡에서 붙여넣기 해주세요!');
+            }).catch(() => {
+                // 폴백: 텍스트 선택
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('작업지시서 내용이 복사되었습니다.\n카카오톡에서 붙여넣기 해주세요!');
+            });
+        }
+
+        // 작업지시서 요약 생성
+        function generateOrderSummary() {
+            const locations = orderData.locations.join(', ');
+            const customLoc = orderData.customLocation ? ` (${orderData.customLocation})` : '';
+            
+            return `📋 브랜드명: ${orderData.brandName}\n🎨 컨셉: ${orderData.concept}\n👤 모델: ${orderData.gender} / ${orderData.race}\n📍 장소: ${locations}${customLoc}\n📱 연락처: ${orderData.contact}\n📸 상품사진: ${orderData.images.length}장 업로드됨\n💬 추가요청: ${orderData.additionalRequest || '없음'}\n⏰ 작성시간: ${orderData.timestamp}`;
+        }
+
+        // PDF 다운로드
+        function downloadPDF() {
+            // 간단한 텍스트 파일 다운로드
+            const orderSummary = generateOrderSummary();
+            const detailSummary = `
+끈스튜디오 AI 피팅 촬영 작업지시서
+=====================================
+
+작성일시: ${orderData.timestamp}
+
+${orderSummary}
+
+=====================================
+끈스튜디오 | @kkeunstudio
+AI 피팅 촬영 전문 서비스
+`;
+            
+            const blob = new Blob([detailSummary], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
+            
             const a = document.createElement('a');
             a.href = url;
-            a.download = fileName;
+            a.download = `끈스튜디오_작업지시서_${orderData.brandName}_${new Date().toISOString().slice(0, 10)}.txt`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-
-            // showCustomAlert('작업 지시서가 HTML 파일로 저장되었습니다. 이 파일을 스튜디오에 공유해주세요.');
-            showCustomAlert('작업 지시서가 HTML 파일로 저장되었습니다. 아이폰의 경우 "파일" 앱 > "나의 iPhone" 또는 "iCloud Drive" 내의 "다운로드" 폴더를 확인해주세요. 이 파일을 스튜디오에 공유해주세요.');
-        });
-
-        copySummaryBtn.addEventListener('click', () => {
-            summaryTextArea.select();
-            document.execCommand('copy');
-            showCustomAlert('내용이 클립보드에 복사되었습니다!');
-        });
-
-        closeModalBtn.addEventListener('click', () => {
-            dataSummaryModal.classList.remove('show');
-        });
-
-        // --- 페이지 로드 시 초기화 로직 (매우 중요) ---
-        function initializeFormFromLoadedHtml() {
-            const initialData = {
-                basicInfo: {
-                    shootDate: shootDateInput.value,
-                    brandName: brandNameInput.value,
-                    shootType: shootTypeSelect.value,
-                    backgroundColor: backgroundColorSelect.value,
-                    imageRatio: imageRatioSelect.value,
-                },
-                products: [],
-                additionalDetails: [],
-                comments: commentsTextarea.value
-            };
             
-            // Collect data from dynamically added sections that might exist in the loaded HTML
-            // This part needs to read existing HTML content, NOT rely on initialData being empty.
-            // If the HTML was saved with data, we need to extract it.
-
-            // Get product data if product-list has children (meaning it was populated before save)
-            document.querySelectorAll('#product-list > div').forEach(card => {
-                const product = {
-                    id: card.dataset.id,
-                    productName: card.querySelector('.product-name') ? card.querySelector('.product-name').value : '',
-                    productType: card.querySelector('.product-type') ? card.querySelector('.product-type').value : '',
-                    productImageBase64: card.querySelector('.image-preview') && card.querySelector('.image-preview').src.startsWith('data:image') ? card.querySelector('.image-preview').src : '',
-                    otherDetails: card.querySelector('.product-other-details') ? card.querySelector('.product-other-details').value : '',
-                    requestedCuts: {}
-                };
-                card.querySelectorAll('.checkbox:checked').forEach(checkbox => {
-                    product.requestedCuts[checkbox.dataset.key] = true;
-                });
-                initialData.products.push(product);
-            });
-
-            // Get additional detail data if additional-detail-list has children
-            document.querySelectorAll('#additional-detail-list > div').forEach(item => {
-                const detail = {
-                    id: item.dataset.id,
-                    productName: item.querySelector('.additional-product-name') ? item.querySelector('.additional-product-name').value : '',
-                    imageBase64: item.querySelector('.image-preview') && item.querySelector('.image-preview').src.startsWith('data:image') ? item.querySelector('.image-preview').src : '',
-                    description: item.querySelector('.additional-description') ? item.querySelector('.additional-description').value : '',
-                };
-                initialData.additionalDetails.push(detail);
-            });
-
-            // Populate form with collected data to re-apply UI logic
-            populateForm(initialData);
-
-            // If the form is initially empty (fresh load, not from saved data), add default items
-            // This check should primarily be for a *truly* blank page, not a reloaded saved one.
-            const isFormInitiallyEmpty = !initialData.basicInfo.shootDate && !initialData.basicInfo.brandName &&
-                                         !initialData.basicInfo.shootType && !initialData.comments &&
-                                         initialData.products.length === 0 && initialData.additionalDetails.length === 0;
-
-            if (isFormInitiallyEmpty) {
-                // Add one product card by default if it's not a styled shoot type initially
-                if (shootTypeSelect.value !== 'styled-shoot') {
-                    createProductCard();
-                }
-                // Add one additional detail item by default for all cases initially,
-                // its visibility/interactivity will be controlled by shootTypeSelect
-                createAdditionalDetailItem();
-            }
+            alert('작업지시서가 다운로드되었습니다!');
         }
-
-        // DOMContentLoaded 시점에 폼 초기화 함수 실행
-        initializeFormFromLoadedHtml();
-    });
-</script>
-
+    </script>
 </body>
 </html>
