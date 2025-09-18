@@ -455,6 +455,11 @@
                         <i class="fab fa-kickstarter mr-2"></i>
                         카카오톡으로 전송
                     </button>
+                    <button onclick="downloadAllImagesAsZip()" 
+                            class="w-full bg-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>
+                        상품사진 ZIP 다운로드
+                    </button>
                     <button id="closeModal" 
                             class="w-full bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
                         닫기
@@ -896,73 +901,52 @@
 
         // 카카오톡으로 전송 (친구찾기 기능으로 전송)
         async function sendToKakao() {
-            try {
-                // 서버에 데이터 저장
-                const shareId = await saveOrderDataToServer();
+            const orderSummary = generateOrderSummary();
+            
+            // 이미지 파일명과 개수 정보 추가
+            const imageInfo = orderData.images.length > 0 
+                ? `\n\n📸 첨부된 상품사진 (${orderData.images.length}장):\n` + 
+                  orderData.images.map((img, index) => `   ${index + 1}. ${img.name}`).join('\n')
+                : '\n\n📸 상품사진: 없음';
+            
+            const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n${orderSummary}${imageInfo}\n\n💡 상품사진은 별도로 전달드리겠습니다.\n\n작업 문의: @kkeunstudio`;
+            
+            // 모바일에서 카카오톡 친구찾기 URL 스킴 사용
+            if (isMobile()) {
+                // 카카오톡 친구찾기로 메시지 전송
+                const kakaoUrl = `kakaotalk://send?text=${encodeURIComponent(message)}`;
                 
-                // 공유 링크 생성
-                const shareUrl = `${window.location.origin}/share.html?id=${shareId}`;
+                window.location.href = kakaoUrl;
                 
-                const orderSummary = generateOrderSummary();
-                const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n${orderSummary}\n\n📎 첨부된 사진들과 상세정보:\n${shareUrl}\n\n💡 위 링크에서 모든 사진을 다운로드하고 상세정보를 확인하세요.\n\n작업 문의: @kkeunstudio`;
-                
-                // 모바일에서 카카오톡 친구찾기 URL 스킴 사용
-                if (isMobile()) {
-                    // 카카오톡 친구찾기로 메시지 전송
-                    const kakaoUrl = `kakaotalk://send?text=${encodeURIComponent(message)}`;
-                    
-                    window.location.href = kakaoUrl;
-                    
-                    // 1.5초 후 앱이 열리지 않으면 Web Share API 또는 클립보드 복사
-                    setTimeout(() => {
-                        if (navigator.share) {
-                            navigator.share({
-                                title: '끈스튜디오 작업지시서',
-                                text: message,
-                                url: shareUrl
-                            }).catch(() => {
-                                copyToClipboard(message);
-                            });
-                        } else {
-                            copyToClipboard(message);
-                        }
-                    }, 1500);
-                } else {
-                    // 데스크톱에서는 Web Share API 또는 클립보드 복사
+                // 1.5초 후 앱이 열리지 않으면 Web Share API 또는 클립보드 복사
+                setTimeout(() => {
                     if (navigator.share) {
                         navigator.share({
                             title: '끈스튜디오 작업지시서',
-                            text: message,
-                            url: shareUrl
+                            text: message
                         }).catch(() => {
                             copyToClipboard(message);
                         });
                     } else {
                         copyToClipboard(message);
                     }
+                }, 1500);
+            } else {
+                // 데스크톱에서는 Web Share API 또는 클립보드 복사
+                if (navigator.share) {
+                    navigator.share({
+                        title: '끈스튜디오 작업지시서',
+                        text: message
+                    }).catch(() => {
+                        copyToClipboard(message);
+                    });
+                } else {
+                    copyToClipboard(message);
                 }
-            } catch (error) {
-                console.error('공유 링크 생성 실패:', error);
-                // 실패 시 기본 메시지로 공유
-                const orderSummary = generateOrderSummary();
-                const message = `끈스튜디오 AI 피팅 촬영 작업지시서\n\n${orderSummary}\n\n작업 문의: @kkeunstudio`;
-                copyToClipboard(message);
             }
         }
         
-        // 서버에 주문 데이터 저장
-        async function saveOrderDataToServer() {
-            const shareData = {
-                ...orderData,
-                shareId: generateShareId(),
-                createdAt: new Date().toISOString()
-            };
-            
-            // 로컬 스토리지에 임시 저장 (실제 서버 구현 시 서버로 전송)
-            localStorage.setItem(`share_${shareData.shareId}`, JSON.stringify(shareData));
-            
-            return shareData.shareId;
-        }
+
         
         // 공유 ID 생성
         function generateShareId() {
@@ -1028,7 +1012,7 @@
         // 클립보드에 복사
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('📋 작업지시서 내용이 클립보드에 복사되었습니다!\n\n💡 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.\n\n📎 이미지는 ZIP 다운로드 버튼을 눌러 별도로 다운로드하세요.');
+                alert('📋 작업지시서 내용이 클립보드에 복사되었습니다!\n\n💡 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.\n\n📎 상품사진은 아래 ZIP 다운로드 버튼으로 별도 전달해 주세요.');
             }).catch(() => {
                 // 폴백: 텍스트 선택
                 const textArea = document.createElement('textarea');
@@ -1037,7 +1021,7 @@
                 textArea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
-                alert('📋 작업지시서 내용이 복사되었습니다!\n\n💡 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.\n\n📎 이미지는 ZIP 다운로드 버튼을 눌러 별도로 다운로드하세요.');
+                alert('📋 작업지시서 내용이 복사되었습니다!\n\n💡 카카오톡을 열어서 원하는 대화방에 붙여넣기 해주세요.\n\n📎 상품사진은 아래 ZIP 다운로드 버튼으로 별도 전달해 주세요.');
             });
         }
 
